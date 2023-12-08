@@ -124,6 +124,33 @@ describe('StorageContract', () => {
     expect(isValid.toBoolean()).toBe(true);
   });
 
+  it('can overrider a registered Handle', async () => {
+    await localDeploy();
+
+    const email = Email.make('support@twitter.com', aliceHandle.toString());
+
+    let firstInsert = await Mina.transaction(senderAccount, () => {
+      zkApp.registerHandle(email, aliceHandle);
+    });
+    await firstInsert.prove();
+    await firstInsert.sign([senderKey]).send();
+
+    let secondInsert = await Mina.transaction(deployerAccount, () => {
+      zkApp.registerHandle(email, aliceHandle);
+    });
+    await secondInsert.prove();
+    await secondInsert.sign([deployerKey]).send();
+
+    let isValid!: Bool;
+    let retrieve = await Mina.transaction(senderAccount, () => {
+      isValid = zkApp.validateHandle(aliceHandle, deployerAccount);
+    });
+    await retrieve.prove();
+    await retrieve.sign([senderKey]).send();
+
+    expect(isValid.toBoolean()).toBe(true);
+  });
+
   it('fails to register a Handle when Email and Handle mismatch', async () => {
     await localDeploy();
 

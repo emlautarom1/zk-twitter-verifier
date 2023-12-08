@@ -137,4 +137,17 @@ describe('StorageContract', () => {
       await insert.sign([senderKey]).send();
     }).rejects.toThrow();
   });
+
+  it('returns false for a Handle that has not been registered', async () => {
+    await localDeploy();
+
+    let isValid!: Bool;
+    let retrieve = await Mina.transaction(senderAccount, () => {
+      isValid = zkApp.validateHandle(bobHandle, senderAccount)
+    });
+    await retrieve.prove();
+    await retrieve.sign([senderKey]).send();
+
+    expect(isValid.toBoolean()).toBe(false);
+  });
 });

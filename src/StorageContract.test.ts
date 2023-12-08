@@ -27,6 +27,9 @@ describe('StorageContract', () => {
     }
   }
 
+  const aliceHandle = CircuitString.fromString('alice');
+  const bobHandle = CircuitString.fromString('bob');
+
   beforeAll(async () => {
     StorageContract.analyzeMethods();
     if (proofsEnabled) await StorageContract.compile();
@@ -73,69 +76,65 @@ describe('StorageContract', () => {
     expect(result.value.equals(Poseidon.hash(value.toFields())).toBoolean()).toBe(true);
   });
 
-  it('can register an account using a valid Email', async () => {
-    await localDeploy();
-
-    const account = CircuitString.fromString('alice');
-    const email = Email.make('support@twitter.com', account.toString());
-
-    let insert = await Mina.transaction(senderAccount, () => {
-      zkApp.registerAccount(email, account);
-    });
-    await insert.prove();
-    await insert.sign([senderKey]).send();
-
-    let isRegistered!: Bool;
-    let retrieve = await Mina.transaction(senderAccount, () => {
-      isRegistered = zkApp.validateAccount(account, senderAccount)
-    });
-    await retrieve.prove();
-    await retrieve.sign([senderKey]).send();
-
-    expect(isRegistered.toBoolean()).toBe(true);
-  });
-
-  it('fails to register an account when Email and Account mismatch', async () => {
-    await localDeploy();
-
-    const account_A = CircuitString.fromString('alice');
-    const account_B = CircuitString.fromString('bob');
-    const email = Email.make('support@twitter.com', account_A.toString());
-
-    expect(async () => {
-      let insert = await Mina.transaction(senderAccount, () => {
-        zkApp.registerAccount(email, account_B);
-      });
-      await insert.prove();
-      await insert.sign([senderKey]).send();
-    }).rejects.toThrow();
-  });
-
-  it('fails to register an account when Email is not from a trusted provider', async () => {
-    await localDeploy();
-
-    const account = CircuitString.fromString('alice');
-    const email = Email.make('support@tweets.com', account.toString());
-
-    expect(async () => {
-      let insert = await Mina.transaction(senderAccount, () => {
-        zkApp.registerAccount(email, account);
-      });
-      await insert.prove();
-      await insert.sign([senderKey]).send();
-    }).rejects.toThrow();
-  });
-
   it('returns None for a key that does not exist', async () => {
     await localDeploy();
 
     let result!: Option;
     let txn = await Mina.transaction(senderAccount, () => {
-      result = zkApp.get(CircuitString.fromString('account_does_not_exist_63'));
+      result = zkApp.get(CircuitString.fromString('does_not_exist_63'));
     });
     await txn.prove();
     await txn.sign([senderKey]).send();
 
     expect(result.isSome.toBoolean()).toBe(false)
+  });
+
+  it('can register a Handle using a valid Email', async () => {
+    await localDeploy();
+
+    const email = Email.make('support@twitter.com', aliceHandle.toString());
+
+    let insert = await Mina.transaction(senderAccount, () => {
+      zkApp.registerHandle(email, aliceHandle);
+    });
+    await insert.prove();
+    await insert.sign([senderKey]).send();
+
+    let isValid!: Bool;
+    let retrieve = await Mina.transaction(senderAccount, () => {
+      isValid = zkApp.validateHandle(aliceHandle, senderAccount)
+    });
+    await retrieve.prove();
+    await retrieve.sign([senderKey]).send();
+
+    expect(isValid.toBoolean()).toBe(true);
+  });
+
+  it('fails to register a Handle when Email and Handle mismatch', async () => {
+    await localDeploy();
+
+    const email = Email.make('support@twitter.com', aliceHandle.toString());
+
+    expect(async () => {
+      let insert = await Mina.transaction(senderAccount, () => {
+        zkApp.registerHandle(email, bobHandle);
+      });
+      await insert.prove();
+      await insert.sign([senderKey]).send();
+    }).rejects.toThrow();
+  });
+
+  it('fails to register a Handle when Email is not from a trusted provider', async () => {
+    await localDeploy();
+
+    const email = Email.make('support@tweets.com', aliceHandle.toString());
+
+    expect(async () => {
+      let insert = await Mina.transaction(senderAccount, () => {
+        zkApp.registerHandle(email, aliceHandle);
+      });
+      await insert.prove();
+      await insert.sign([senderKey]).send();
+    }).rejects.toThrow();
   });
 });

@@ -35,12 +35,12 @@ zkApp.get(key); // ... get a value by key
 
 export class Email extends Struct({
   provider: CircuitString,
-  account: CircuitString,
+  handle: CircuitString,
 }) {
-  static make(provider: string, user: string) {
+  static make(provider: string, handle: string) {
     return new Email({
       provider: CircuitString.fromString(provider),
-      account: CircuitString.fromString(user),
+      handle: CircuitString.fromString(handle),
     });
   }
 }
@@ -64,7 +64,7 @@ export class StorageContract extends SmartContract {
     actionType: KeyValuePair,
   });
 
-  @method registerAccount(email: Email, account: CircuitString) {
+  @method registerHandle(email: Email, handle: CircuitString) {
     /*
     // Source: https://github.com/kmille/dkim-verify/blob/master/verify-dkim.py
     // Inputs:
@@ -81,16 +81,16 @@ export class StorageContract extends SmartContract {
     const expectedProvider = CircuitString.fromString("support@twitter.com");
 
     let emailProvider: CircuitString = email.provider;
-    let emailAccount: CircuitString = email.account;
+    let emailHandle: CircuitString = email.handle;
 
     emailProvider.assertEquals(expectedProvider);
-    emailAccount.assertEquals(account);
+    emailHandle.assertEquals(handle);
 
-    this.set(email.account, this.sender);
+    this.set(email.handle, this.sender);
   }
 
-  @method validateAccount(account: CircuitString, owner: PublicKey): Bool {
-    let storedOwner = this.get(account);
+  @method validateHandle(handle: CircuitString, owner: PublicKey): Bool {
+    let storedOwner = this.get(handle);
     return storedOwner.isSome.and(storedOwner.value.equals(Poseidon.hash(owner.toFields())));
   }
 

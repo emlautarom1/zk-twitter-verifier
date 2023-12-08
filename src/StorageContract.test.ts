@@ -1,4 +1,4 @@
-import { AccountUpdate, CircuitString, Field, Mina, PrivateKey, PublicKey } from 'o1js';
+import { AccountUpdate, CircuitString, Field, Mina, Poseidon, PrivateKey, PublicKey } from 'o1js';
 import { Option, StorageContract } from './StorageContract';
 
 let proofsEnabled = false;
@@ -15,15 +15,15 @@ describe('StorageContract', () => {
   let map = {
     0: {
       key: CircuitString.fromString('alice123'),
-      value: Field(192),
+      value: PrivateKey.random().toPublicKey(),
     },
     1: {
       key: CircuitString.fromString('bob74'),
-      value: Field(151),
+      value: PrivateKey.random().toPublicKey(),
     },
     2: {
       key: CircuitString.fromString('cooluser74'),
-      value: Field(781),
+      value: PrivateKey.random().toPublicKey(),
     }
   }
 
@@ -70,7 +70,7 @@ describe('StorageContract', () => {
     await retrieve.sign([senderKey]).send();
 
     expect(result.isSome.toBoolean()).toBe(true);
-    expect(result.value.equals(value).toBoolean()).toBe(true);
+    expect(result.value.equals(Poseidon.hash(value.toFields())).toBoolean()).toBe(true);
   });
 
   it('returns None for a key that does not exist', async () => {

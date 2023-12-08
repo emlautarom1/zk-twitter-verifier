@@ -4,6 +4,7 @@ import {
   Field,
   Poseidon,
   Provable,
+  PublicKey,
   Reducer,
   SmartContract,
   Struct,
@@ -51,8 +52,8 @@ export class StorageContract extends SmartContract {
     actionType: KeyValuePair,
   });
 
-  @method set(key: CircuitString, value: Field) {
-    this.reducer.dispatch({ key: Poseidon.hash(key.toFields()), value });
+  @method set(key: CircuitString, value: PublicKey) {
+    this.reducer.dispatch({ key: Poseidon.hash(key.toFields()), value: Poseidon.hash(value.toFields()) });
   }
 
   @method get(key: CircuitString): Option {

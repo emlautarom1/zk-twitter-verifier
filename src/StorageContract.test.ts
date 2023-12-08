@@ -75,6 +75,32 @@ describe('StorageContract', () => {
     expect(isValid.toBoolean()).toBe(true);
   });
 
+  it('can register multuple Handles under the same Account', async () => {
+    await localDeploy();
+
+    const emailAlice = Email.make('support@twitter.com', aliceHandle.toString());
+    const emailBob = Email.make('support@twitter.com', bobHandle.toString());
+
+    let insert = await Mina.transaction(senderAccount, () => {
+      zkApp.registerHandle(emailAlice, aliceHandle);
+      zkApp.registerHandle(emailBob, bobHandle);
+    });
+    await insert.prove();
+    await insert.sign([senderKey]).send();
+
+    let isValidAlice!: Bool;
+    let isValidBob!: Bool;
+    let retrieve = await Mina.transaction(senderAccount, () => {
+      isValidAlice = zkApp.validateHandle(aliceHandle, senderAccount);
+      isValidBob = zkApp.validateHandle(bobHandle, senderAccount);
+    });
+    await retrieve.prove();
+    await retrieve.sign([senderKey]).send();
+
+    expect(isValidAlice.toBoolean()).toBe(true);
+    expect(isValidBob.toBoolean()).toBe(true);
+  });
+
   it('fails to register a Handle when Email and Handle mismatch', async () => {
     await localDeploy();
 

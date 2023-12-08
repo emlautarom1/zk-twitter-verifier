@@ -12,21 +12,6 @@ describe('StorageContract', () => {
     zkAppPrivateKey: PrivateKey,
     zkApp: StorageContract;
 
-  let map = {
-    0: {
-      key: CircuitString.fromString('alice123'),
-      value: PrivateKey.random().toPublicKey(),
-    },
-    1: {
-      key: CircuitString.fromString('bob74'),
-      value: PrivateKey.random().toPublicKey(),
-    },
-    2: {
-      key: CircuitString.fromString('cooluser74'),
-      value: PrivateKey.random().toPublicKey(),
-    }
-  }
-
   const aliceHandle = CircuitString.fromString('alice');
   const bobHandle = CircuitString.fromString('bob');
 

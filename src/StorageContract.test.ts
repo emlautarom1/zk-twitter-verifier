@@ -111,6 +111,21 @@ describe('StorageContract', () => {
     }).rejects.toThrow();
   });
 
+  it('fails to register an account when Email is not from a trusted provider', async () => {
+    await localDeploy();
+
+    const account = CircuitString.fromString('alice');
+    const email = Email.make('support@tweets.com', account.toString());
+
+    expect(async () => {
+      let insert = await Mina.transaction(senderAccount, () => {
+        zkApp.registerAccount(email, account);
+      });
+      await insert.prove();
+      await insert.sign([senderKey]).send();
+    }).rejects.toThrow();
+  });
+
   it('returns None for a key that does not exist', async () => {
     await localDeploy();
 

@@ -1,5 +1,5 @@
-import { Field, Mina, PrivateKey, PublicKey, AccountUpdate, Poseidon } from 'o1js';
-import { StorageContract, Option } from './StorageContract';
+import { AccountUpdate, CircuitString, Field, Mina, PrivateKey, PublicKey } from 'o1js';
+import { Option, StorageContract } from './StorageContract';
 
 let proofsEnabled = false;
 
@@ -14,15 +14,15 @@ describe('StorageContract', () => {
 
   let map = {
     0: {
-      key: PrivateKey.random().toPublicKey(),
+      key: CircuitString.fromString('alice123'),
       value: Field(192),
     },
     1: {
-      key: PrivateKey.random().toPublicKey(),
+      key: CircuitString.fromString('bob74'),
       value: Field(151),
     },
     2: {
-      key: PrivateKey.random().toPublicKey(),
+      key: CircuitString.fromString('cooluser74'),
       value: Field(781),
     }
   }
@@ -78,7 +78,7 @@ describe('StorageContract', () => {
 
     let result!: Option;
     let txn = await Mina.transaction(senderAccount, () => {
-      result = zkApp.get(PrivateKey.random().toPublicKey());
+      result = zkApp.get(CircuitString.fromString('account_does_not_exist_63'));
     });
     await txn.prove();
     await txn.sign([senderKey]).send();

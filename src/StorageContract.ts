@@ -1,9 +1,9 @@
 import {
   Bool,
+  CircuitString,
   Field,
   Poseidon,
   Provable,
-  PublicKey,
   Reducer,
   SmartContract,
   Struct,
@@ -51,11 +51,11 @@ export class StorageContract extends SmartContract {
     actionType: KeyValuePair,
   });
 
-  @method set(key: PublicKey, value: Field) {
+  @method set(key: CircuitString, value: Field) {
     this.reducer.dispatch({ key: Poseidon.hash(key.toFields()), value });
   }
 
-  @method get(key: PublicKey): Option {
+  @method get(key: CircuitString): Option {
     let pendingActions = this.reducer.getActions({
       fromActionState: Reducer.initialActionState,
     });

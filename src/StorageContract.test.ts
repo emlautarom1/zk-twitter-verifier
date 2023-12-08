@@ -1,23 +1,23 @@
 import { AccountUpdate, Bool, CircuitString, Mina, PrivateKey, PublicKey } from 'o1js';
-import { Email, StorageContract } from './StorageContract';
+import { Email, TwitterVerifier } from './StorageContract';
 
 let proofsEnabled = false;
 
-describe('StorageContract', () => {
+describe('TwitterVerifier', () => {
   let deployerAccount: PublicKey,
     deployerKey: PrivateKey,
     senderAccount: PublicKey,
     senderKey: PrivateKey,
     zkAppAddress: PublicKey,
     zkAppPrivateKey: PrivateKey,
-    zkApp: StorageContract;
+    zkApp: TwitterVerifier;
 
   const aliceHandle = CircuitString.fromString('alice');
   const bobHandle = CircuitString.fromString('bob');
 
   beforeAll(async () => {
-    StorageContract.analyzeMethods();
-    if (proofsEnabled) await StorageContract.compile();
+    TwitterVerifier.analyzeMethods();
+    if (proofsEnabled) await TwitterVerifier.compile();
   });
 
   beforeEach(() => {
@@ -27,7 +27,7 @@ describe('StorageContract', () => {
     ({ privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1]);
     zkAppPrivateKey = PrivateKey.random();
     zkAppAddress = zkAppPrivateKey.toPublicKey();
-    zkApp = new StorageContract(zkAppAddress);
+    zkApp = new TwitterVerifier(zkAppAddress);
   });
 
   async function localDeploy() {

@@ -38,7 +38,7 @@ const KeyValuePair = provable({
   value: Field,
 });
 
-export class StorageContract extends SmartContract {
+export class TwitterVerifier extends SmartContract {
   reducer = Reducer({
     actionType: KeyValuePair,
   });

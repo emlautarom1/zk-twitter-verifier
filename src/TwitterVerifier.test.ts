@@ -1,5 +1,5 @@
 import { AccountUpdate, Bool, CircuitString, Mina, PrivateKey, PublicKey } from 'o1js';
-import { Email, TwitterVerifier } from './StorageContract';
+import { Email, TwitterVerifier } from './TwitterVerifier';
 
 let proofsEnabled = false;
 

@@ -1,4 +1,4 @@
-import { AccountUpdate, CircuitString, Field, Mina, Poseidon, PrivateKey, PublicKey } from 'o1js';
+import { AccountUpdate, Bool, CircuitString, Mina, Poseidon, PrivateKey, PublicKey } from 'o1js';
 import { Email, Option, StorageContract } from './StorageContract';
 
 let proofsEnabled = false;
@@ -85,15 +85,14 @@ describe('StorageContract', () => {
     await insert.prove();
     await insert.sign([senderKey]).send();
 
-    let result!: Option;
+    let isRegistered!: Bool;
     let retrieve = await Mina.transaction(senderAccount, () => {
-      result = zkApp.get(account);
+      isRegistered = zkApp.validateAccount(account, senderAccount)
     });
     await retrieve.prove();
     await retrieve.sign([senderKey]).send();
 
-    expect(result.isSome.toBoolean()).toBe(true);
-    expect(result.value.equals(Poseidon.hash(senderAccount.toFields())).toBoolean()).toBe(true);
+    expect(isRegistered.toBoolean()).toBe(true);
   });
 
   it('returns None for a key that does not exist', async () => {

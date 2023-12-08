@@ -89,6 +89,11 @@ export class StorageContract extends SmartContract {
     this.set(email.account, this.sender);
   }
 
+  @method validateAccount(account: CircuitString, owner: PublicKey): Bool {
+    let storedOwner = this.get(account);
+    return storedOwner.isSome.and(storedOwner.value.equals(Poseidon.hash(owner.toFields())));
+  }
+
   @method set(key: CircuitString, value: PublicKey) {
     this.reducer.dispatch({ key: Poseidon.hash(key.toFields()), value: Poseidon.hash(value.toFields()) });
   }

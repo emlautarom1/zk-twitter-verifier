@@ -102,7 +102,7 @@ describe('StorageContract', () => {
 
     let isValid!: Bool;
     let retrieve = await Mina.transaction(senderAccount, () => {
-      isValid = zkApp.validateHandle(aliceHandle, senderAccount)
+      isValid = zkApp.validateHandle(aliceHandle, senderAccount);
     });
     await retrieve.prove();
     await retrieve.sign([senderKey]).send();
@@ -143,7 +143,28 @@ describe('StorageContract', () => {
 
     let isValid!: Bool;
     let retrieve = await Mina.transaction(senderAccount, () => {
-      isValid = zkApp.validateHandle(bobHandle, senderAccount)
+      isValid = zkApp.validateHandle(bobHandle, senderAccount);
+    });
+    await retrieve.prove();
+    await retrieve.sign([senderKey]).send();
+
+    expect(isValid.toBoolean()).toBe(false);
+  });
+
+  it('returns false for a Handle that has been registered under a different Account', async () => {
+    await localDeploy();
+
+    const email = Email.make('support@twitter.com', aliceHandle.toString());
+
+    let insert = await Mina.transaction(senderAccount, () => {
+      zkApp.registerHandle(email, aliceHandle);
+    });
+    await insert.prove();
+    await insert.sign([senderKey]).send();
+
+    let isValid!: Bool;
+    let retrieve = await Mina.transaction(senderAccount, () => {
+      isValid = zkApp.validateHandle(aliceHandle, PrivateKey.random().toPublicKey());
     });
     await retrieve.prove();
     await retrieve.sign([senderKey]).send();

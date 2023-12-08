@@ -76,8 +76,8 @@ describe('StorageContract', () => {
   it('can register an account using a valid Email', async () => {
     await localDeploy();
 
-    const account = CircuitString.fromString("alice");
-    const email = Email.make("support@twitter.com", account.toString());
+    const account = CircuitString.fromString('alice');
+    const email = Email.make('support@twitter.com', account.toString());
 
     let insert = await Mina.transaction(senderAccount, () => {
       zkApp.registerAccount(email, account);
@@ -93,6 +93,22 @@ describe('StorageContract', () => {
     await retrieve.sign([senderKey]).send();
 
     expect(isRegistered.toBoolean()).toBe(true);
+  });
+
+  it('fails to register an account when Email and Account mismatch', async () => {
+    await localDeploy();
+
+    const account_A = CircuitString.fromString('alice');
+    const account_B = CircuitString.fromString('bob');
+    const email = Email.make('support@twitter.com', account_A.toString());
+
+    expect(async () => {
+      let insert = await Mina.transaction(senderAccount, () => {
+        zkApp.registerAccount(email, account_B);
+      });
+      await insert.prove();
+      await insert.sign([senderKey]).send();
+    }).rejects.toThrow();
   });
 
   it('returns None for a key that does not exist', async () => {

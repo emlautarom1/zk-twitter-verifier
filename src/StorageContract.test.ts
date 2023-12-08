@@ -126,14 +126,17 @@ describe('StorageContract', () => {
     await secondInsert.prove();
     await secondInsert.sign([deployerKey]).send();
 
-    let isValid!: Bool;
+    let isOwnedByDeployer!: Bool;
+    let isOwnedBySender!: Bool;
     let retrieve = await Mina.transaction(senderAccount, () => {
-      isValid = zkApp.validateHandle(aliceHandle, deployerAccount);
+      isOwnedByDeployer = zkApp.validateHandle(aliceHandle, deployerAccount);
+      isOwnedBySender = zkApp.validateHandle(aliceHandle, senderAccount);
     });
     await retrieve.prove();
     await retrieve.sign([senderKey]).send();
 
-    expect(isValid.toBoolean()).toBe(true);
+    expect(isOwnedBySender.toBoolean()).toBe(false);
+    expect(isOwnedByDeployer.toBoolean()).toBe(true);
   });
 
   it('fails to register a Handle when Email and Handle mismatch', async () => {

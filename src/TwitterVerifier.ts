@@ -1,16 +1,4 @@
-import {
-  Bool,
-  CircuitString,
-  Field,
-  Poseidon,
-  Provable,
-  PublicKey,
-  Reducer,
-  SmartContract,
-  Struct,
-  method,
-  provable
-} from 'o1js';
+import { Bool, CircuitString, Field, Poseidon, Provable, PublicKey, Reducer, SmartContract, Struct, method, provable } from 'o1js';
 
 export class Email extends Struct({
   provider: CircuitString,

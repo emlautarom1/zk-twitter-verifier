@@ -1,5 +1,5 @@
 import { AccountUpdate, CircuitString, Field, Mina, Poseidon, PrivateKey, PublicKey } from 'o1js';
-import { Option, StorageContract } from './StorageContract';
+import { Email, Option, StorageContract } from './StorageContract';
 
 let proofsEnabled = false;
 
@@ -71,6 +71,29 @@ describe('StorageContract', () => {
 
     expect(result.isSome.toBoolean()).toBe(true);
     expect(result.value.equals(Poseidon.hash(value.toFields())).toBoolean()).toBe(true);
+  });
+
+  it('can register an account using a valid Email', async () => {
+    await localDeploy();
+
+    const account = CircuitString.fromString("alice");
+    const email = Email.make("support@twitter.com", account.toString());
+
+    let insert = await Mina.transaction(senderAccount, () => {
+      zkApp.registerAccount(email, account);
+    });
+    await insert.prove();
+    await insert.sign([senderKey]).send();
+
+    let result!: Option;
+    let retrieve = await Mina.transaction(senderAccount, () => {
+      result = zkApp.get(account);
+    });
+    await retrieve.prove();
+    await retrieve.sign([senderKey]).send();
+
+    expect(result.isSome.toBoolean()).toBe(true);
+    expect(result.value.equals(Poseidon.hash(senderAccount.toFields())).toBoolean()).toBe(true);
   });
 
   it('returns None for a key that does not exist', async () => {

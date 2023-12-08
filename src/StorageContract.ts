@@ -33,6 +33,18 @@ zkApp.get(key); // ... get a value by key
 ```
 */
 
+export class Email extends Struct({
+  provider: CircuitString,
+  account: CircuitString,
+}) {
+  static make(provider: string, user: string) {
+    return new Email({
+      provider: CircuitString.fromString(provider),
+      account: CircuitString.fromString(user),
+    });
+  }
+}
+
 export class Option extends Struct({
   isSome: Bool,
   value: Field,
@@ -51,6 +63,31 @@ export class StorageContract extends SmartContract {
   reducer = Reducer({
     actionType: KeyValuePair,
   });
+
+  @method registerAccount(email: Email, account: CircuitString) {
+    /*
+    // Source: https://github.com/kmille/dkim-verify/blob/master/verify-dkim.py
+    // Inputs:
+    mail = parseEmail("email.eml")
+    publicKey = <twitter hard coded public key>
+    // In ZK-Program:
+    dkim = parseDKIMHeader(mail["DKIM-Signature"])
+    body = mail["Body"]
+    hashBody(body).assertEquals(dkim["bh"])
+    headersH = hashHeaders(mail, dkim["h"])
+    signature = dkim["b"]
+    verify(hh, signature, publicKey).assertTrue()
+    */
+    const expectedProvider = CircuitString.fromString("support@twitter.com");
+
+    let emailProvider: CircuitString = email.provider;
+    let emailAccount: CircuitString = email.account;
+
+    emailProvider.assertEquals(expectedProvider);
+    emailAccount.assertEquals(account);
+
+    this.set(email.account, this.sender);
+  }
 
   @method set(key: CircuitString, value: PublicKey) {
     this.reducer.dispatch({ key: Poseidon.hash(key.toFields()), value: Poseidon.hash(value.toFields()) });

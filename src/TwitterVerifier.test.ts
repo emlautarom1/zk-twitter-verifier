@@ -5,10 +5,14 @@ let proofsEnabled = false;
 
 describe('TwitterVerifier', () => {
   let deployerAccount: PublicKey,
-    deployerKey: PrivateKey,
-    senderAccount: PublicKey,
-    senderKey: PrivateKey,
-    zkAppAddress: PublicKey,
+    deployerKey: PrivateKey;
+
+  let userA_Account: PublicKey,
+    userA_Key: PrivateKey,
+    userB_Account: PublicKey,
+    userB_Key: PrivateKey;
+
+  let zkAppAddress: PublicKey,
     zkAppPrivateKey: PrivateKey,
     zkApp: TwitterVerifier;
 
@@ -24,7 +28,8 @@ describe('TwitterVerifier', () => {
     const Local = Mina.LocalBlockchain({ proofsEnabled });
     Mina.setActiveInstance(Local);
     ({ privateKey: deployerKey, publicKey: deployerAccount } = Local.testAccounts[0]);
-    ({ privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1]);
+    ({ privateKey: userA_Key, publicKey: userA_Account } = Local.testAccounts[1]);
+    ({ privateKey: userB_Key, publicKey: userB_Account } = Local.testAccounts[2]);
     zkAppPrivateKey = PrivateKey.random();
     zkAppAddress = zkAppPrivateKey.toPublicKey();
     zkApp = new TwitterVerifier(zkAppAddress);
@@ -44,18 +49,18 @@ describe('TwitterVerifier', () => {
 
     const email = Email.make('support@twitter.com', aliceHandle.toString());
 
-    let insert = await Mina.transaction(senderAccount, () => {
+    let insert = await Mina.transaction(userA_Account, () => {
       zkApp.registerHandle(email, aliceHandle);
     });
     await insert.prove();
-    await insert.sign([senderKey]).send();
+    await insert.sign([userA_Key]).send();
 
     let isValid!: Bool;
-    let retrieve = await Mina.transaction(senderAccount, () => {
-      isValid = zkApp.validateHandle(aliceHandle, senderAccount);
+    let retrieve = await Mina.transaction(userA_Account, () => {
+      isValid = zkApp.validateHandle(aliceHandle, userA_Account);
     });
     await retrieve.prove();
-    await retrieve.sign([senderKey]).send();
+    await retrieve.sign([userA_Key]).send();
 
     expect(isValid.toBoolean()).toBe(true);
   });
@@ -66,21 +71,21 @@ describe('TwitterVerifier', () => {
     const emailAlice = Email.make('support@twitter.com', aliceHandle.toString());
     const emailBob = Email.make('support@twitter.com', bobHandle.toString());
 
-    let insert = await Mina.transaction(senderAccount, () => {
+    let insert = await Mina.transaction(userA_Account, () => {
       zkApp.registerHandle(emailAlice, aliceHandle);
       zkApp.registerHandle(emailBob, bobHandle);
     });
     await insert.prove();
-    await insert.sign([senderKey]).send();
+    await insert.sign([userA_Key]).send();
 
     let isValidAlice!: Bool;
     let isValidBob!: Bool;
-    let retrieve = await Mina.transaction(senderAccount, () => {
-      isValidAlice = zkApp.validateHandle(aliceHandle, senderAccount);
-      isValidBob = zkApp.validateHandle(bobHandle, senderAccount);
+    let retrieve = await Mina.transaction(userA_Account, () => {
+      isValidAlice = zkApp.validateHandle(aliceHandle, userA_Account);
+      isValidBob = zkApp.validateHandle(bobHandle, userA_Account);
     });
     await retrieve.prove();
-    await retrieve.sign([senderKey]).send();
+    await retrieve.sign([userA_Key]).send();
 
     expect(isValidAlice.toBoolean()).toBe(true);
     expect(isValidBob.toBoolean()).toBe(true);
@@ -92,19 +97,19 @@ describe('TwitterVerifier', () => {
     const email = Email.make('support@twitter.com', aliceHandle.toString());
 
     for (let i = 0; i < 5; i++) {
-      let insert = await Mina.transaction(senderAccount, () => {
+      let insert = await Mina.transaction(userA_Account, () => {
         zkApp.registerHandle(email, aliceHandle);
       });
       await insert.prove();
-      await insert.sign([senderKey]).send();
+      await insert.sign([userA_Key]).send();
     }
 
     let isValid!: Bool;
-    let retrieve = await Mina.transaction(senderAccount, () => {
-      isValid = zkApp.validateHandle(aliceHandle, senderAccount);
+    let retrieve = await Mina.transaction(userA_Account, () => {
+      isValid = zkApp.validateHandle(aliceHandle, userA_Account);
     });
     await retrieve.prove();
-    await retrieve.sign([senderKey]).send();
+    await retrieve.sign([userA_Key]).send();
 
     expect(isValid.toBoolean()).toBe(true);
   });
@@ -114,29 +119,29 @@ describe('TwitterVerifier', () => {
 
     const email = Email.make('support@twitter.com', aliceHandle.toString());
 
-    let firstInsert = await Mina.transaction(senderAccount, () => {
+    let firstInsert = await Mina.transaction(userA_Account, () => {
       zkApp.registerHandle(email, aliceHandle);
     });
     await firstInsert.prove();
-    await firstInsert.sign([senderKey]).send();
+    await firstInsert.sign([userA_Key]).send();
 
-    let secondInsert = await Mina.transaction(deployerAccount, () => {
+    let secondInsert = await Mina.transaction(userB_Account, () => {
       zkApp.registerHandle(email, aliceHandle);
     });
     await secondInsert.prove();
-    await secondInsert.sign([deployerKey]).send();
+    await secondInsert.sign([userB_Key]).send();
 
-    let isOwnedByDeployer!: Bool;
-    let isOwnedBySender!: Bool;
-    let retrieve = await Mina.transaction(senderAccount, () => {
-      isOwnedByDeployer = zkApp.validateHandle(aliceHandle, deployerAccount);
-      isOwnedBySender = zkApp.validateHandle(aliceHandle, senderAccount);
+    let isOwnedByA!: Bool;
+    let isOwnedByB!: Bool;
+    let retrieve = await Mina.transaction(userA_Account, () => {
+      isOwnedByA = zkApp.validateHandle(aliceHandle, userA_Account);
+      isOwnedByB = zkApp.validateHandle(aliceHandle, userB_Account);
     });
     await retrieve.prove();
-    await retrieve.sign([senderKey]).send();
+    await retrieve.sign([userA_Key]).send();
 
-    expect(isOwnedBySender.toBoolean()).toBe(false);
-    expect(isOwnedByDeployer.toBoolean()).toBe(true);
+    expect(isOwnedByA.toBoolean()).toBe(false);
+    expect(isOwnedByB.toBoolean()).toBe(true);
   });
 
   it('fails to register a Handle when Email and Handle mismatch', async () => {
@@ -145,11 +150,11 @@ describe('TwitterVerifier', () => {
     const email = Email.make('support@twitter.com', aliceHandle.toString());
 
     expect(async () => {
-      let insert = await Mina.transaction(senderAccount, () => {
+      let insert = await Mina.transaction(userA_Account, () => {
         zkApp.registerHandle(email, bobHandle);
       });
       await insert.prove();
-      await insert.sign([senderKey]).send();
+      await insert.sign([userA_Key]).send();
     }).rejects.toThrow();
   });
 
@@ -159,11 +164,11 @@ describe('TwitterVerifier', () => {
     const email = Email.make('support@tweets.com', aliceHandle.toString());
 
     expect(async () => {
-      let insert = await Mina.transaction(senderAccount, () => {
+      let insert = await Mina.transaction(userA_Account, () => {
         zkApp.registerHandle(email, aliceHandle);
       });
       await insert.prove();
-      await insert.sign([senderKey]).send();
+      await insert.sign([userA_Key]).send();
     }).rejects.toThrow();
   });
 
@@ -171,11 +176,11 @@ describe('TwitterVerifier', () => {
     await localDeploy();
 
     let isValid!: Bool;
-    let retrieve = await Mina.transaction(senderAccount, () => {
-      isValid = zkApp.validateHandle(bobHandle, senderAccount);
+    let retrieve = await Mina.transaction(userA_Account, () => {
+      isValid = zkApp.validateHandle(bobHandle, userA_Account);
     });
     await retrieve.prove();
-    await retrieve.sign([senderKey]).send();
+    await retrieve.sign([userA_Key]).send();
 
     expect(isValid.toBoolean()).toBe(false);
   });
@@ -185,18 +190,18 @@ describe('TwitterVerifier', () => {
 
     const email = Email.make('support@twitter.com', aliceHandle.toString());
 
-    let insert = await Mina.transaction(senderAccount, () => {
+    let insert = await Mina.transaction(userA_Account, () => {
       zkApp.registerHandle(email, aliceHandle);
     });
     await insert.prove();
-    await insert.sign([senderKey]).send();
+    await insert.sign([userA_Key]).send();
 
     let isValid!: Bool;
-    let retrieve = await Mina.transaction(senderAccount, () => {
+    let retrieve = await Mina.transaction(userA_Account, () => {
       isValid = zkApp.validateHandle(aliceHandle, PrivateKey.random().toPublicKey());
     });
     await retrieve.prove();
-    await retrieve.sign([senderKey]).send();
+    await retrieve.sign([userA_Key]).send();
 
     expect(isValid.toBoolean()).toBe(false);
   });

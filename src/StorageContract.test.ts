@@ -1,5 +1,5 @@
-import { AccountUpdate, Bool, CircuitString, Mina, Poseidon, PrivateKey, PublicKey } from 'o1js';
-import { Email, Option, StorageContract } from './StorageContract';
+import { AccountUpdate, Bool, CircuitString, Mina, PrivateKey, PublicKey } from 'o1js';
+import { Email, StorageContract } from './StorageContract';
 
 let proofsEnabled = false;
 
@@ -53,41 +53,6 @@ describe('StorageContract', () => {
     await txn.prove();
     await txn.sign([deployerKey, zkAppPrivateKey]).send();
   }
-
-  it('can add a key-value pair', async () => {
-    await localDeploy();
-
-    let { key, value } = map[0];
-
-    let insert = await Mina.transaction(senderAccount, () => {
-      zkApp.set(key, value);
-    });
-    await insert.prove();
-    await insert.sign([senderKey]).send();
-
-    let result!: Option;
-    let retrieve = await Mina.transaction(senderAccount, () => {
-      result = zkApp.get(key);
-    });
-    await retrieve.prove();
-    await retrieve.sign([senderKey]).send();
-
-    expect(result.isSome.toBoolean()).toBe(true);
-    expect(result.value.equals(Poseidon.hash(value.toFields())).toBoolean()).toBe(true);
-  });
-
-  it('returns None for a key that does not exist', async () => {
-    await localDeploy();
-
-    let result!: Option;
-    let txn = await Mina.transaction(senderAccount, () => {
-      result = zkApp.get(CircuitString.fromString('does_not_exist_63'));
-    });
-    await txn.prove();
-    await txn.sign([senderKey]).send();
-
-    expect(result.isSome.toBoolean()).toBe(false)
-  });
 
   it('can register a Handle using a valid Email', async () => {
     await localDeploy();

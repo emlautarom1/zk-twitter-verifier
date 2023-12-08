@@ -45,7 +45,7 @@ export class Email extends Struct({
   }
 }
 
-export class Option extends Struct({
+class Option extends Struct({
   isSome: Bool,
   value: Field,
 }) {
@@ -94,11 +94,11 @@ export class StorageContract extends SmartContract {
     return storedOwner.isSome.and(storedOwner.value.equals(Poseidon.hash(owner.toFields())));
   }
 
-  @method set(key: CircuitString, value: PublicKey) {
+  private set(key: CircuitString, value: PublicKey) {
     this.reducer.dispatch({ key: Poseidon.hash(key.toFields()), value: Poseidon.hash(value.toFields()) });
   }
 
-  @method get(key: CircuitString): Option {
+  private get(key: CircuitString): Option {
     let pendingActions = this.reducer.getActions({
       fromActionState: Reducer.initialActionState,
     });

@@ -11,12 +11,13 @@ import {
    method
 } from "o1js";
 
-const Words64 = Provable.Array(UInt32, 64);
+// TODO: Since 64 * UInt32 causes an error, we use 48 for now until we figure out a solution
+const Words64 = Provable.Array(UInt32, 48);
 
 export class UInt2048 extends Struct({ words: Words64 }) {
 
   static zero() {
-    return new UInt2048({ words: Array(64).fill(UInt32.zero) });
+    return new UInt2048({ words: Array(48).fill(UInt32.zero) });
   }
 
   static fromHexString(hexString: string) {
@@ -40,7 +41,7 @@ export class UInt2048 extends Struct({ words: Words64 }) {
   sub(other: UInt2048): UInt2048 {
     let res = UInt2048.zero();
     let borrow = UInt64.zero;
-    for (let i = 0; i < 64; i++) {
+    for (let i = 0; i < 48; i++) {
       let minuend = this.words[i].toUInt64();
       // Instead of (-1) the minuend in case of borrow, we (+1) the substrahend as UInt64, avoiding underflows
       let substrahend = other.words[i].toUInt64().add(borrow);
@@ -63,9 +64,9 @@ export class UInt2048 extends Struct({ words: Words64 }) {
   mul(other: UInt2048): UInt2048 {
     let result: UInt2048 = UInt2048.zero();
 
-    for (let j = 0; j < 64; j++) {
+    for (let j = 0; j < 48; j++) {
       let carry: UInt64 = new UInt64(0);
-      for (let i = 0; i + j < 64; i++) {
+      for (let i = 0; i + j < 48; i++) {
         // Perform the multiplication in UInt64 to ensure that the result always fits (no overflow here)
         let product: UInt64 = this.words[i].toUInt64()
           .mul(other.words[j].toUInt64())

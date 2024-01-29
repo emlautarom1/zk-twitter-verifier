@@ -64,7 +64,7 @@ export class UInt2048 extends Struct({ words: Words64 }) {
     let result: UInt2048 = UInt2048.zero();
 
     for (let j = 0; j < 64; j++) {
-      let carry: UInt64 = new UInt64(0);
+      let carry = UInt64.zero;
       for (let i = 0; i + j < 64; i++) {
         // Perform the multiplication in UInt64 to ensure that the result always fits (no overflow here)
         let product: UInt64 = this.words[i].toUInt64()

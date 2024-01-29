@@ -132,7 +132,7 @@ describe("BigInt", () => {
     await txn.sign([deployerKey, zkAppPrivateKey]).send();
   }
 
-  xit("substracts", async () => {
+  it("substracts", async () => {
     await localDeploy();
 
     let a = UInt2048.fromHexString("0xFFFFFFFFBBBBBBBB");
@@ -153,7 +153,7 @@ describe("BigInt", () => {
     }
   });
 
-  xit("substracts with underflow", async () => {
+  it("substracts with underflow", async () => {
     await localDeploy();
 
     let a = UInt2048.fromHexString("0xAAAAAAAABBBBBBBB");
@@ -174,7 +174,7 @@ describe("BigInt", () => {
     }
   });
 
-  xit("substracts to 0", async () => {
+  it("substracts to 0", async () => {
     await localDeploy();
 
     let a = UInt2048.zero();
@@ -194,7 +194,7 @@ describe("BigInt", () => {
     }
   });
 
-  xit("multiplies", async () => {
+  it("multiplies", async () => {
     await localDeploy();
 
     let a = UInt2048.fromHexString("0xFFFFFFFFAAAAAAAA");

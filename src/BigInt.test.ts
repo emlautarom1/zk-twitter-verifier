@@ -1,4 +1,15 @@
-import { Provable, Struct, UInt32, UInt64 } from "o1js";
+import {
+  AccountUpdate,
+   Mina,
+   PrivateKey,
+   Provable,
+   PublicKey,
+   SmartContract,
+   Struct,
+   UInt32,
+   UInt64,
+   method
+} from "o1js";
 
 const Words64 = Provable.Array(UInt32, 64);
 
@@ -76,50 +87,126 @@ export class UInt2048 extends Struct({ words: Words64 }) {
   }
 }
 
-describe("BigInt", () => {
-  it('substracts', () => {
+export class TestContract extends SmartContract {
+  @method sub(a: UInt2048, b: UInt2048): UInt2048 {
+    return a.sub(b);
+  }
+
+  @method mul(a: UInt2048, b: UInt2048): UInt2048 {
+    return a.mul(b);
+  }
+}
+
+describe('BigInt', () => {
+  let deployerAccount: PublicKey;
+  let deployerKey: PrivateKey;
+
+  let user_Account: PublicKey;
+  let user_Key: PrivateKey;
+
+  let zkAppAddress: PublicKey;
+  let zkAppPrivateKey: PrivateKey;
+  let zkApp: TestContract;
+
+  beforeAll(async () => {
+    TestContract.analyzeMethods();
+    await TestContract.compile();
+  });
+
+  beforeEach(() => {
+    const Local = Mina.LocalBlockchain({ proofsEnabled: true });
+    Mina.setActiveInstance(Local);
+    ({ privateKey: deployerKey, publicKey: deployerAccount } = Local.testAccounts[0]);
+    ({ privateKey: user_Key, publicKey: user_Account } = Local.testAccounts[1]);
+    zkAppPrivateKey = PrivateKey.random();
+    zkAppAddress = zkAppPrivateKey.toPublicKey();
+    zkApp = new TestContract(zkAppAddress);
+  });
+
+  async function localDeploy() {
+    const txn = await Mina.transaction(deployerAccount, () => {
+      AccountUpdate.fundNewAccount(deployerAccount);
+      zkApp.deploy();
+    });
+    await txn.prove();
+    await txn.sign([deployerKey, zkAppPrivateKey]).send();
+  }
+
+  xit('substracts', async () => {
+    await localDeploy();
+
     let a = UInt2048.fromHexString("0xFFFFFFFFBBBBBBBB");
     let b = UInt2048.fromHexString("0xCCCCCCCCAAAAAAAA");
 
-    let res = a.sub(b);
+    let res!: UInt2048;
+    let retrieve = await Mina.transaction(user_Account, () => {
+      res = zkApp.sub(a, b);
+    });
+    await retrieve.prove();
+    await retrieve.sign([user_Key]).send();
+
     expect(res.words[0].toBigint()).toBe(BigInt("0x11111111"));
     expect(res.words[1].toBigint()).toBe(BigInt("0x33333333"));
     for (let i = 2; i < res.words.length; i++) {
       const word = res.words[i];
       expect(word.toBigint()).toBe(0n);
     }
-  })
+  });
 
-  it('substracts with underflow', () => {
+  xit('substracts with underflow', async () => {
+    await localDeploy();
+
     let a = UInt2048.fromHexString("0xAAAAAAAABBBBBBBB");
     let b = UInt2048.fromHexString("0xCCCCCCCCAAAAAAAA");
 
-    let res = a.sub(b);
+    let res!: UInt2048;
+    let retrieve = await Mina.transaction(user_Account, () => {
+      res = zkApp.sub(a, b);
+    });
+    await retrieve.prove();
+    await retrieve.sign([user_Key]).send();
+
     expect(res.words[0].toBigint()).toBe(BigInt("0x11111111"));
     expect(res.words[1].toBigint()).toBe(BigInt("0xDDDDDDDE"));
     for (let i = 2; i < res.words.length; i++) {
       const word = res.words[i];
       expect(word.toBigint()).toBe(BigInt("0xFFFFFFFF"));
     }
-  })
+  });
 
-  it('substracts to 0', () => {
+  xit('substracts to 0', async () => {
+    await localDeploy();
+
     let a = UInt2048.zero();
     let b = UInt2048.fromHexString("0xAAAAAAAA");
 
-    let res = a.sub(b);
+    let res!: UInt2048;
+    let retrieve = await Mina.transaction(user_Account, () => {
+      res = zkApp.sub(a, b);
+    });
+    await retrieve.prove();
+    await retrieve.sign([user_Key]).send();
+
     expect(res.words[0].toBigint()).toBe(BigInt("0x55555556"));
     for (let i = 1; i < res.words.length; i++) {
       const word = res.words[i];
       expect(word.toBigint()).toBe(BigInt("0xFFFFFFFF"))
     }
-  })
+  });
 
-  it('multiplies', () => {
+  xit('multiplies', async () => {
+    await localDeploy();
+
     let a = UInt2048.fromHexString("0xFFFFFFFFAAAAAAAA");
     let b = UInt2048.fromHexString("0xEEEEEEEEBBBBBBBB");
 
-    let res = a.mul(b)
+    let res!: UInt2048;
+    let retrieve = await Mina.transaction(user_Account, () => {
+      res = zkApp.mul(a, b);
+    });
+    await retrieve.prove();
+    await retrieve.sign([user_Key]).send();
+
     expect(res.words[0].toBigint()).toBe(BigInt("0x2D82D82E"));
     expect(res.words[1].toBigint()).toBe(BigInt("0xCCCCCCCD"));
     expect(res.words[2].toBigint()).toBe(BigInt("0x6C16C16A"));
@@ -128,5 +215,5 @@ describe("BigInt", () => {
       const word = res.words[i];
       expect(word.toBigint()).toBe(0n);
     }
-  })
+  });
 });

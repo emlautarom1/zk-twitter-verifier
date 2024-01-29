@@ -194,6 +194,8 @@ describe("BigInt", () => {
     }
   });
 
+  // Disabled until we can figure out why this produces OOM
+  // See: https://github.com/o1-labs/o1js/issues/1391
   xit("multiplies", async () => {
     await localDeploy();
 
@@ -234,4 +236,4 @@ describe("BigInt JS", () => {
       expect(word.toBigint()).toBe(0n);
     }
   });
-})
+});

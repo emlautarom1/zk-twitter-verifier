@@ -21,17 +21,17 @@ export class UInt2048 extends Struct({ words: Words64 }) {
 
   static fromHexString(hexString: string) {
     const wordSize = 8;
-    const chars = hexString.split('')
+    const chars = hexString.split("")
 
-    const prefix = chars.splice(0, 2).join('');
-    if (prefix != '0x') {
+    const prefix = chars.splice(0, 2).join("");
+    if (prefix != "0x") {
       throw new Error("Hex string should be prefixed with `0x`");
     }
 
     const res = UInt2048.zero();
     for (let i = 1; i <= chars.length / wordSize; i++) {
       const offset = chars.length - (i * wordSize);
-      const word = chars.slice(offset, offset + wordSize).join('');
+      const word = chars.slice(offset, offset + wordSize).join("");
       res.words[i - 1] = UInt32.from(`0x${word}`);
     }
     return res;
@@ -97,7 +97,7 @@ export class TestContract extends SmartContract {
   }
 }
 
-describe('BigInt', () => {
+describe("BigInt", () => {
   let deployerAccount: PublicKey;
   let deployerKey: PrivateKey;
 
@@ -132,7 +132,7 @@ describe('BigInt', () => {
     await txn.sign([deployerKey, zkAppPrivateKey]).send();
   }
 
-  xit('substracts', async () => {
+  xit("substracts", async () => {
     await localDeploy();
 
     let a = UInt2048.fromHexString("0xFFFFFFFFBBBBBBBB");
@@ -153,7 +153,7 @@ describe('BigInt', () => {
     }
   });
 
-  xit('substracts with underflow', async () => {
+  xit("substracts with underflow", async () => {
     await localDeploy();
 
     let a = UInt2048.fromHexString("0xAAAAAAAABBBBBBBB");
@@ -174,7 +174,7 @@ describe('BigInt', () => {
     }
   });
 
-  xit('substracts to 0', async () => {
+  xit("substracts to 0", async () => {
     await localDeploy();
 
     let a = UInt2048.zero();
@@ -194,7 +194,7 @@ describe('BigInt', () => {
     }
   });
 
-  xit('multiplies', async () => {
+  xit("multiplies", async () => {
     await localDeploy();
 
     let a = UInt2048.fromHexString("0xFFFFFFFFAAAAAAAA");

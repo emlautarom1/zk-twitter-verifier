@@ -183,4 +183,36 @@ describe("BigInt ZK", () => {
       expect(word.toBigInt()).toBe(0n);
     }
   });
+
+  it("substracts with underflow", async () => {
+    let a = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBB");
+    let b = UInt2048.fromHexString("0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAA");
+
+    let proof = await TestProgram.subtract(a, b);
+    proof.verify();
+    let res = proof.publicOutput;
+
+    expect(res.words[0].toBigInt()).toBe(0x1111111111111111n);
+    expect(res.words[1].toBigInt()).toBe(0xDDDDDDDDDDDDDDDEn);
+
+    for (let i = 2; i < res.words.length; i++) {
+      const word = res.words[i];
+      expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn);
+    }
+  });
+
+  it("substracts to 0", async () => {
+    let a = UInt2048.zero();
+    let b = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAA");
+
+    let proof = await TestProgram.subtract(a, b);
+    proof.verify();
+    let res = proof.publicOutput;
+
+    expect(res.words[0].toBigInt()).toBe(0x5555555555555556n);
+    for (let i = 1; i < res.words.length; i++) {
+      const word = res.words[i];
+      expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn)
+    }
+  });
 })

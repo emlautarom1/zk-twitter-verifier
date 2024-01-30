@@ -74,6 +74,10 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
         let lowBits = Field.fromBits(bits.slice(0, 64));
         let highBits = Field.fromBits(bits.slice(64, 128));
 
+        // NOTE: In theory, these operations should be equivalent to the above, but they're not
+        // let highBits = product.div(Field.from(18446744073709551616n /* 2^64 */ ));
+        // let lowBits = product.sub(highBits.mul(Field.from(18446744073709551616n /* 2^64 */ )));
+
         // Keep only the value that fits in a UInt64 (the low bits)
         result.words[i + j] = lowBits;
         // Extract the carry from the product by keeping the bits that could not fit in a UInt64 (the high bits).
@@ -159,6 +163,13 @@ let TestProgram = ZkProgram({
         return a.sub(b);
       }
     },
+    // TODO: Disabled until we figure out why we're triggering OOM
+    // multiply: {
+    //   privateInputs: [UInt2048, UInt2048],
+    //   method(a: UInt2048, b: UInt2048): UInt2048 {
+    //     return a.mul(b);
+    //   }
+    // },
   }
 })
 
@@ -215,4 +226,23 @@ describe("BigInt ZK", () => {
       expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn)
     }
   });
+
+  // TODO: Disable until we figure out why we're triggering OOM
+  // it("multiplies", async () => {
+  //   let a = UInt2048.fromHexString("0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAA");
+  //   let b = UInt2048.fromHexString("0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBB");
+
+  //   let proof = await TestProgram.multiply(a, b);
+  //   proof.verify();
+  //   let res = proof.publicOutput;
+
+  //   expect(res.words[0].toBigInt()).toBe(0xD82D82D82D82D82En);
+  //   expect(res.words[1].toBigInt()).toBe(0x7777777777777777n);
+  //   expect(res.words[2].toBigInt()).toBe(0x6C16C16C16C16C15n);
+  //   expect(res.words[3].toBigInt()).toBe(0xEEEEEEEEEEEEEEEEn);
+  //   for (let i = 4; i < res.words.length; i++) {
+  //     const word = res.words[i];
+  //     expect(word.toBigInt()).toBe(0n);
+  //   }
+  // });
 })

@@ -1,4 +1,4 @@
-import { Field, Provable, Struct } from "o1js";
+import { Field, Provable, Struct, ZkProgram } from "o1js";
 
 // We'll use each `Field` as a `UInt64`, meaning that we need 32 `Field`s to represent a `UInt2048`
 // TODO: A possible optimization is to use a custom power of 2 given that a Field can be at most 2^254
@@ -146,3 +146,41 @@ describe("BigInt JS", () => {
     }
   });
 });
+
+// ZK-Program tests
+
+let TestProgram = ZkProgram({
+  name: "TestProgram",
+  publicOutput: UInt2048,
+  methods: {
+    subtract: {
+      privateInputs: [UInt2048, UInt2048],
+      method(a: UInt2048, b: UInt2048): UInt2048 {
+        return a.sub(b);
+      }
+    },
+  }
+})
+
+describe("BigInt ZK", () => {
+  beforeAll(async () => {
+    TestProgram.analyzeMethods();
+    await TestProgram.compile();
+  })
+
+  it("substracts", async () => {
+    let a = UInt2048.fromHexString("0xFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBB");
+    let b = UInt2048.fromHexString("0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAA");
+
+    let proof = await TestProgram.subtract(a, b);
+    proof.verify();
+    let res = proof.publicOutput;
+
+    expect(res.words[0].toBigInt()).toBe(0x1111111111111111n);
+    expect(res.words[1].toBigInt()).toBe(0x3333333333333333n);
+    for (let i = 2; i < res.words.length; i++) {
+      const word = res.words[i];
+      expect(word.toBigInt()).toBe(0n);
+    }
+  });
+})

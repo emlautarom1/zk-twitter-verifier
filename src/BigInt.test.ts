@@ -127,19 +127,19 @@ describe("BigInt JS", () => {
     }
   });
 
-  // it("multiplies", () => {
-  //   let a = UInt2048.fromHexString("0xFFFFFFFFAAAAAAAA");
-  //   let b = UInt2048.fromHexString("0xEEEEEEEEBBBBBBBB");
+  it("multiplies", () => {
+    let a = UInt2048.fromHexString("0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAA");
+    let b = UInt2048.fromHexString("0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBB");
 
-  //   let res = a.mul(b);
+    let res = a.mul(b);
 
-  //   expect(res.words[0].toBigInt()).toBe(BigInt("0x2D82D82E"));
-  //   expect(res.words[1].toBigInt()).toBe(BigInt("0xCCCCCCCD"));
-  //   expect(res.words[2].toBigInt()).toBe(BigInt("0x6C16C16A"));
-  //   expect(res.words[3].toBigInt()).toBe(BigInt("0xEEEEEEEE"));
-  //   for (let i = 4; i < res.words.length; i++) {
-  //     const word = res.words[i];
-  //     expect(word.toBigInt()).toBe(0n);
-  //   }
-  // });
+    expect(res.words[0].toBigInt()).toBe(0xD82D82D82D82D82En);
+    expect(res.words[1].toBigInt()).toBe(0x7777777777777777n);
+    expect(res.words[2].toBigInt()).toBe(0x6C16C16C16C16C15n);
+    expect(res.words[3].toBigInt()).toBe(0xEEEEEEEEEEEEEEEEn);
+    for (let i = 4; i < res.words.length; i++) {
+      const word = res.words[i];
+      expect(word.toBigInt()).toBe(0n);
+    }
+  });
 });

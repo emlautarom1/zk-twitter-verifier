@@ -1,14 +1,4 @@
-import {
-  AccountUpdate,
-   Field,
-   Mina,
-   PrivateKey,
-   Provable,
-   PublicKey,
-   SmartContract,
-   Struct,
-   method
-} from "o1js";
+import { Field, Provable, Struct } from "o1js";
 
 // We'll use each `Field` as a `UInt32`, meaning that we need 64 `Field`s to represent a `UInt2048`
 const Words64 = Provable.Array(Field, 64);
@@ -93,63 +83,13 @@ export class UInt2048 extends Struct({ words: Words64 }) {
   }
 }
 
-export class TestContract extends SmartContract {
-  @method sub(a: UInt2048, b: UInt2048): UInt2048 {
-    return a.sub(b);
-  }
+describe("BigInt JS", () => {
 
-  @method mul(a: UInt2048, b: UInt2048): UInt2048 {
-    return a.mul(b);
-  }
-}
-
-describe("BigInt", () => {
-  let deployerAccount: PublicKey;
-  let deployerKey: PrivateKey;
-
-  let user_Account: PublicKey;
-  let user_Key: PrivateKey;
-
-  let zkAppAddress: PublicKey;
-  let zkAppPrivateKey: PrivateKey;
-  let zkApp: TestContract;
-
-  beforeAll(async () => {
-    TestContract.analyzeMethods();
-    await TestContract.compile();
-  });
-
-  beforeEach(() => {
-    const Local = Mina.LocalBlockchain({ proofsEnabled: true });
-    Mina.setActiveInstance(Local);
-    ({ privateKey: deployerKey, publicKey: deployerAccount } = Local.testAccounts[0]);
-    ({ privateKey: user_Key, publicKey: user_Account } = Local.testAccounts[1]);
-    zkAppPrivateKey = PrivateKey.random();
-    zkAppAddress = zkAppPrivateKey.toPublicKey();
-    zkApp = new TestContract(zkAppAddress);
-  });
-
-  async function localDeploy() {
-    const txn = await Mina.transaction(deployerAccount, () => {
-      AccountUpdate.fundNewAccount(deployerAccount);
-      zkApp.deploy();
-    });
-    await txn.prove();
-    await txn.sign([deployerKey, zkAppPrivateKey]).send();
-  }
-
-  it.only("substracts", async () => {
-    await localDeploy();
-
+  it("substracts", () => {
     let a = UInt2048.fromHexString("0xFFFFFFFFBBBBBBBB");
     let b = UInt2048.fromHexString("0xCCCCCCCCAAAAAAAA");
 
-    let res!: UInt2048;
-    let retrieve = await Mina.transaction(user_Account, () => {
-      res = zkApp.sub(a, b);
-    });
-    await retrieve.prove();
-    await retrieve.sign([user_Key]).send();
+    let res = a.sub(b);
 
     expect(res.words[0].toBigInt()).toBe(BigInt("0x11111111"));
     expect(res.words[1].toBigInt()).toBe(BigInt("0x33333333"));
@@ -160,17 +100,10 @@ describe("BigInt", () => {
   });
 
   it("substracts with underflow", async () => {
-    await localDeploy();
-
     let a = UInt2048.fromHexString("0xAAAAAAAABBBBBBBB");
     let b = UInt2048.fromHexString("0xCCCCCCCCAAAAAAAA");
 
-    let res!: UInt2048;
-    let retrieve = await Mina.transaction(user_Account, () => {
-      res = zkApp.sub(a, b);
-    });
-    await retrieve.prove();
-    await retrieve.sign([user_Key]).send();
+    let res = a.sub(b);
 
     expect(res.words[0].toBigInt()).toBe(BigInt("0x11111111"));
     expect(res.words[1].toBigInt()).toBe(BigInt("0xDDDDDDDE"));
@@ -181,17 +114,10 @@ describe("BigInt", () => {
   });
 
   it("substracts to 0", async () => {
-    await localDeploy();
-
     let a = UInt2048.zero();
     let b = UInt2048.fromHexString("0xAAAAAAAA");
 
-    let res!: UInt2048;
-    let retrieve = await Mina.transaction(user_Account, () => {
-      res = zkApp.sub(a, b);
-    });
-    await retrieve.prove();
-    await retrieve.sign([user_Key]).send();
+    let res = a.sub(b);
 
     expect(res.words[0].toBigInt()).toBe(BigInt("0x55555556"));
     for (let i = 1; i < res.words.length; i++) {
@@ -200,34 +126,7 @@ describe("BigInt", () => {
     }
   });
 
-  // Disabled until we can figure out why this produces OOM
-  // See: https://github.com/o1-labs/o1js/issues/1391
-  xit("multiplies", async () => {
-    await localDeploy();
-
-    let a = UInt2048.fromHexString("0xFFFFFFFFAAAAAAAA");
-    let b = UInt2048.fromHexString("0xEEEEEEEEBBBBBBBB");
-
-    let res!: UInt2048;
-    let retrieve = await Mina.transaction(user_Account, () => {
-      res = zkApp.mul(a, b);
-    });
-    await retrieve.prove();
-    await retrieve.sign([user_Key]).send();
-
-    expect(res.words[0].toBigInt()).toBe(BigInt("0x2D82D82E"));
-    expect(res.words[1].toBigInt()).toBe(BigInt("0xCCCCCCCD"));
-    expect(res.words[2].toBigInt()).toBe(BigInt("0x6C16C16A"));
-    expect(res.words[3].toBigInt()).toBe(BigInt("0xEEEEEEEE"));
-    for (let i = 4; i < res.words.length; i++) {
-      const word = res.words[i];
-      expect(word.toBigInt()).toBe(0n);
-    }
-  });
-});
-
-describe("BigInt JS", () => {
-  it("multiplies", async () => {
+  it("multiplies", () => {
     let a = UInt2048.fromHexString("0xFFFFFFFFAAAAAAAA");
     let b = UInt2048.fromHexString("0xEEEEEEEEBBBBBBBB");
 

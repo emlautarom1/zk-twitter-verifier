@@ -1,6 +1,9 @@
 import { Field, Provable, Struct } from "o1js";
 
 // We'll use each `Field` as a `UInt64`, meaning that we need 32 `Field`s to represent a `UInt2048`
+// TODO: A possible optimization is to use a custom power of 2 given that a Field can be at most 2^254
+// For example, each "word" could be <= 2^127, such that multiplication never overflows
+// With this, we would need an array of 17 elements instead of 32
 const DoubleWord32 = Provable.Array(Field, 32);
 
 export class UInt2048 extends Struct({ words: DoubleWord32 }) {

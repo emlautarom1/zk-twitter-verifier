@@ -99,19 +99,20 @@ describe("BigInt JS", () => {
     }
   });
 
-  // it("substracts with underflow", async () => {
-  //   let a = UInt2048.fromHexString("0xAAAAAAAABBBBBBBB");
-  //   let b = UInt2048.fromHexString("0xCCCCCCCCAAAAAAAA");
+  it("substracts with underflow", async () => {
+    let a = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBB");
+    let b = UInt2048.fromHexString("0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAA");
 
-  //   let res = a.sub(b);
+    let res = a.sub(b);
 
-  //   expect(res.words[0].toBigInt()).toBe(BigInt("0x11111111"));
-  //   expect(res.words[1].toBigInt()).toBe(BigInt("0xDDDDDDDE"));
-  //   for (let i = 2; i < res.words.length; i++) {
-  //     const word = res.words[i];
-  //     expect(word.toBigInt()).toBe(BigInt("0xFFFFFFFF"));
-  //   }
-  // });
+    expect(res.words[0].toBigInt()).toBe(0x1111111111111111n);
+    expect(res.words[1].toBigInt()).toBe(0xDDDDDDDDDDDDDDDEn);
+
+    for (let i = 2; i < res.words.length; i++) {
+      const word = res.words[i];
+      expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn);
+    }
+  });
 
   // it("substracts to 0", async () => {
   //   let a = UInt2048.zero();

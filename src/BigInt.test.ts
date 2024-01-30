@@ -102,7 +102,7 @@ describe("BigInt JS", () => {
     }
   });
 
-  it("substracts with underflow", async () => {
+  it("substracts with underflow", () => {
     let a = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBB");
     let b = UInt2048.fromHexString("0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAA");
 
@@ -117,7 +117,7 @@ describe("BigInt JS", () => {
     }
   });
 
-  it("substracts to 0", async () => {
+  it("substracts to 0", () => {
     let a = UInt2048.zero();
     let b = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAA");
 

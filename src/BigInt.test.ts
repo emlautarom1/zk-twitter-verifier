@@ -114,18 +114,18 @@ describe("BigInt JS", () => {
     }
   });
 
-  // it("substracts to 0", async () => {
-  //   let a = UInt2048.zero();
-  //   let b = UInt2048.fromHexString("0xAAAAAAAA");
+  it("substracts to 0", async () => {
+    let a = UInt2048.zero();
+    let b = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAA");
 
-  //   let res = a.sub(b);
+    let res = a.sub(b);
 
-  //   expect(res.words[0].toBigInt()).toBe(BigInt("0x55555556"));
-  //   for (let i = 1; i < res.words.length; i++) {
-  //     const word = res.words[i];
-  //     expect(word.toBigInt()).toBe(BigInt("0xFFFFFFFF"))
-  //   }
-  // });
+    expect(res.words[0].toBigInt()).toBe(0x5555555555555556n);
+    for (let i = 1; i < res.words.length; i++) {
+      const word = res.words[i];
+      expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn)
+    }
+  });
 
   // it("multiplies", () => {
   //   let a = UInt2048.fromHexString("0xFFFFFFFFAAAAAAAA");

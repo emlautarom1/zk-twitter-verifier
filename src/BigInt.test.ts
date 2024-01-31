@@ -1,18 +1,21 @@
 import { Field, Provable, Struct, ZkProgram } from "o1js";
+import { provableTuple } from "o1js/dist/node/lib/circuit_value";
 
 const Gadgets = {
-  splitUInt128: (x: Field): { lo: Field, hi: Field } => {
-    // We don't have access to your typicall masking and shifting operations,
-    // so in order to extract the low and high bits we'll use the bit array representation.
-    let bits = x.toBits(128);
-    let lo = Field.fromBits(bits.slice(0, 64));
-    let hi = Field.fromBits(bits.slice(64, 128));
+  splitUInt128: (n: Field): { lo: Field, hi: Field } => {
+    let [hi, lo] = Provable.witness(
+      provableTuple([Field, Field]),
+      () => {
+        let nBigInt = n.toBigInt();
+        let q = nBigInt >> 64n;
+        let r = nBigInt - (q << 64n);
+        return [new Field(q), new Field(r)];
+      }
+    );
 
-    // NOTE: In theory, these operations should be equivalent to the above, but they're not
-    // let highBits = product.div(Field.from(18446744073709551616n /* 2^64 */ ));
-    // let lowBits = product.sub(highBits.mul(Field.from(18446744073709551616n /* 2^64 */ )));
+    n.assertEquals(hi.mul(1n << 64n).add(lo));
 
-    return { hi, lo };
+    return { lo, hi };
   }
 }
 
@@ -171,13 +174,12 @@ let TestProgram = ZkProgram({
         return a.sub(b);
       }
     },
-    // TODO: Disabled until we figure out why we're triggering OOM
-    // multiply: {
-    //   privateInputs: [UInt2048, UInt2048],
-    //   method(a: UInt2048, b: UInt2048): UInt2048 {
-    //     return a.mul(b);
-    //   }
-    // },
+    multiply: {
+      privateInputs: [UInt2048, UInt2048],
+      method(a: UInt2048, b: UInt2048): UInt2048 {
+        return a.mul(b);
+      }
+    },
   }
 })
 
@@ -235,22 +237,21 @@ describe("BigInt ZK", () => {
     }
   });
 
-  // TODO: Disable until we figure out why we're triggering OOM
-  // it("multiplies", async () => {
-  //   let a = UInt2048.fromHexString("0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAA");
-  //   let b = UInt2048.fromHexString("0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBB");
+  it("multiplies", async () => {
+    let a = UInt2048.fromHexString("0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAA");
+    let b = UInt2048.fromHexString("0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBB");
 
-  //   let proof = await TestProgram.multiply(a, b);
-  //   proof.verify();
-  //   let res = proof.publicOutput;
+    let proof = await TestProgram.multiply(a, b);
+    proof.verify();
+    let res = proof.publicOutput;
 
-  //   expect(res.words[0].toBigInt()).toBe(0xD82D82D82D82D82En);
-  //   expect(res.words[1].toBigInt()).toBe(0x7777777777777777n);
-  //   expect(res.words[2].toBigInt()).toBe(0x6C16C16C16C16C15n);
-  //   expect(res.words[3].toBigInt()).toBe(0xEEEEEEEEEEEEEEEEn);
-  //   for (let i = 4; i < res.words.length; i++) {
-  //     const word = res.words[i];
-  //     expect(word.toBigInt()).toBe(0n);
-  //   }
-  // });
+    expect(res.words[0].toBigInt()).toBe(0xD82D82D82D82D82En);
+    expect(res.words[1].toBigInt()).toBe(0x7777777777777777n);
+    expect(res.words[2].toBigInt()).toBe(0x6C16C16C16C16C15n);
+    expect(res.words[3].toBigInt()).toBe(0xEEEEEEEEEEEEEEEEn);
+    for (let i = 4; i < res.words.length; i++) {
+      const word = res.words[i];
+      expect(word.toBigInt()).toBe(0n);
+    }
+  });
 })

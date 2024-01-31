@@ -1,12 +1,16 @@
 import { Field, Provable, Struct, ZkProgram } from "o1js";
 
 const Gadgets = {
-  splitUInt128: (x: Field): { lo: Field, hi: Field} => {
+  splitUInt128: (x: Field): { lo: Field, hi: Field } => {
     // We don't have access to your typicall masking and shifting operations,
     // so in order to extract the low and high bits we'll use the bit array representation.
     let bits = x.toBits(128);
     let lo = Field.fromBits(bits.slice(0, 64));
     let hi = Field.fromBits(bits.slice(64, 128));
+
+    // NOTE: In theory, these operations should be equivalent to the above, but they're not
+    // let highBits = product.div(Field.from(18446744073709551616n /* 2^64 */ ));
+    // let lowBits = product.sub(highBits.mul(Field.from(18446744073709551616n /* 2^64 */ )));
 
     return { hi, lo };
   }
@@ -56,7 +60,7 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
       borrow = Provable.if(minuend.lessThan(substrahend), Field.from(1), Field.from(0));
       minuend = Provable.if(
         minuend.lessThan(substrahend),
-        minuend.add(Field.from(18446744073709551616n /* 2^64 */ )),
+        minuend.add(Field.from(18446744073709551616n /* 2^64 */)),
         minuend);
 
       // Perform the subtraction, where no underflow can happen
@@ -81,10 +85,6 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
           .add(carry);
 
         let { lo: lowBits, hi: highBits } = Gadgets.splitUInt128(product);
-
-        // NOTE: In theory, these operations should be equivalent to the above, but they're not
-        // let highBits = product.div(Field.from(18446744073709551616n /* 2^64 */ ));
-        // let lowBits = product.sub(highBits.mul(Field.from(18446744073709551616n /* 2^64 */ )));
 
         // Keep only the value that fits in a UInt64 (the low bits)
         result.words[i + j] = lowBits;

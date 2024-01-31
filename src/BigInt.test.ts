@@ -8,7 +8,7 @@ const Gadgets = {
       () => {
         let nBigInt = n.toBigInt();
         let q = nBigInt >> 64n;
-        let r = nBigInt - (q << 64n);
+        let r = nBigInt - (q << 64n /* 2^64 */);
         return [new Field(q), new Field(r)];
       }
     );
@@ -60,9 +60,13 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
 
       // In case the minuend is less than the substrahend, we have to borrow from the next word
       // If we borrow, we add 2^64 to the minuend
-      borrow = Provable.if(minuend.lessThan(substrahend), Field.from(1), Field.from(0));
+      let requiresBorrow = minuend.lessThan(substrahend);
+      borrow = Provable.if(
+        requiresBorrow,
+        Field.from(1),
+        Field.from(0));
       minuend = Provable.if(
-        minuend.lessThan(substrahend),
+        requiresBorrow,
         minuend.add(Field.from(1n << 64n /* 2^64*/)),
         minuend);
 
@@ -185,7 +189,8 @@ let TestProgram = ZkProgram({
 
 describe("BigInt ZK", () => {
   beforeAll(async () => {
-    TestProgram.analyzeMethods();
+    let analysis = TestProgram.analyzeMethods();
+    console.log({"subtract": analysis.subtract.rows, "multiply": analysis.multiply.rows });
     await TestProgram.compile();
   })
 

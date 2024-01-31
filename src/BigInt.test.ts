@@ -63,7 +63,7 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
       borrow = Provable.if(minuend.lessThan(substrahend), Field.from(1), Field.from(0));
       minuend = Provable.if(
         minuend.lessThan(substrahend),
-        minuend.add(Field.from(18446744073709551616n /* 2^64 */)),
+        minuend.add(Field.from(1n << 64n /* 2^64*/)),
         minuend);
 
       // Perform the subtraction, where no underflow can happen

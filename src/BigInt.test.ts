@@ -2,8 +2,8 @@ import { Field, Provable, Struct, ZkProgram } from "o1js";
 import { provableTuple } from "o1js/dist/node/lib/circuit_value";
 
 const Gadgets = {
-  splitUInt128: (n: Field): { lo: Field, hi: Field } => {
-    let [hi, lo] = Provable.witness(
+  divMod64: (n: Field) => {
+    let [quotient, remainder] = Provable.witness(
       provableTuple([Field, Field]),
       () => {
         let nBigInt = n.toBigInt();
@@ -13,9 +13,9 @@ const Gadgets = {
       }
     );
 
-    n.assertEquals(hi.mul(1n << 64n).add(lo));
+    n.assertEquals(quotient.mul(1n << 64n).add(remainder));
 
-    return { lo, hi };
+    return { quotient, remainder };
   }
 }
 
@@ -91,8 +91,7 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
           // Lastly, add the previous carry
           .add(carry);
 
-        let { lo: lowBits, hi: highBits } = Gadgets.splitUInt128(product);
-
+        let { remainder: lowBits, quotient: highBits } = Gadgets.divMod64(product);
         // Keep only the value that fits in a UInt64 (the low bits)
         result.words[i + j] = lowBits;
         // Extract the carry from the product by keeping the bits that could not fit in a UInt64 (the high bits).

@@ -1,5 +1,17 @@
 import { Field, Provable, Struct, ZkProgram } from "o1js";
 
+const Gadgets = {
+  splitUInt128: (x: Field): { lo: Field, hi: Field} => {
+    // We don't have access to your typicall masking and shifting operations,
+    // so in order to extract the low and high bits we'll use the bit array representation.
+    let bits = x.toBits(128);
+    let lo = Field.fromBits(bits.slice(0, 64));
+    let hi = Field.fromBits(bits.slice(64, 128));
+
+    return { hi, lo };
+  }
+}
+
 // We'll use each `Field` as a `UInt64`, meaning that we need 32 `Field`s to represent a `UInt2048`
 // TODO: A possible optimization is to use a custom power of 2 given that a Field can be at most 2^254
 // For example, each "word" could be <= 2^127, such that multiplication never overflows
@@ -68,11 +80,7 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
           // Lastly, add the previous carry
           .add(carry);
 
-        // We don't have access to your typicall masking and shifting operations,
-        // so in order to extract the low and high bits we'll use the bit array representation.
-        let bits = product.toBits(128);
-        let lowBits = Field.fromBits(bits.slice(0, 64));
-        let highBits = Field.fromBits(bits.slice(64, 128));
+        let { lo: lowBits, hi: highBits } = Gadgets.splitUInt128(product);
 
         // NOTE: In theory, these operations should be equivalent to the above, but they're not
         // let highBits = product.div(Field.from(18446744073709551616n /* 2^64 */ ));

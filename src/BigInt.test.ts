@@ -102,6 +102,31 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
 
     return result;
   }
+
+  mulMod(other: UInt2048, modulus: UInt2048): UInt2048 {
+    let x = this;
+    let y = other
+    let m = modulus;
+
+    // (x * y) = (q * m) + r
+    // (x * y) - (q * m) = r
+    // r_ = (x * y) - (q * m) => r_ = r
+    let { q, r } = Provable.witness(Struct({ q: UInt2048, r: UInt2048 }), () => {
+      let xy = x.toBigInt() * y.toBigInt();
+      let q = xy / m.toBigInt();
+      let r = xy % m.toBigInt();
+
+      return { q: UInt2048.fromBigInt(q), r: UInt2048.fromBigInt(r) };
+    });
+
+
+    let xy = x.mul(y);
+    let qm = q.mul(m);
+    let r_ = xy.sub(qm);
+    Provable.assertEqual(UInt2048, r_, r);
+
+    return r;
+  }
 }
 
 describe("BigInt JS", () => {
@@ -150,6 +175,16 @@ describe("BigInt JS", () => {
 
     expect(res.toBigInt()).toBe(0xEEEEEEEEEEEEEEEE6C16C16C16C16C157777777777777777D82D82D82D82D82En);
   });
+
+  it("multiplies in modulo", () => {
+    let a = UInt2048.fromBigInt(0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAAn);
+    let b = UInt2048.fromBigInt(0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBBn);
+    let m = UInt2048.fromBigInt(0xAAAAAAAAAAAAAAAACCCCCCCCCCCCCCCCn);
+
+    let res = a.mulMod(b, m);
+
+    expect(res.toBigInt()).toBe(0x67FE2DF75A56ED1C86F0C0F7949801D2n);
+  })
 });
 
 // ZK-Program tests

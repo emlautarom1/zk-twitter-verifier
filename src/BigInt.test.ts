@@ -278,7 +278,7 @@ describe("BigInt ZK", () => {
     expect(res.toBigInt()).toBe(0xEEEEEEEEEEEEEEEE6C16C16C16C16C157777777777777777D82D82D82D82D82En);
   });
 
-  it.only("multiplies in modulo", async () => {
+  it("multiplies in modulo", async () => {
     let a = UInt2048.fromBigInt(0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAAn);
     let b = UInt2048.fromBigInt(0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBBn);
     let m = UInt2048.fromBigInt(0xAAAAAAAAAAAAAAAACCCCCCCCCCCCCCCCn);

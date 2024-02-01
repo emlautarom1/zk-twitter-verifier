@@ -31,20 +31,11 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
     return new UInt2048({ words: Array(32).fill(Field.from(0)) });
   }
 
-  static fromHexString(hexString: string) {
-    const wordSize = 16;
-    const chars = hexString.split("")
-
-    const prefix = chars.splice(0, 2).join("");
-    if (prefix != "0x") {
-      throw new Error("Hex string should be prefixed with `0x`");
-    }
-
+  static fromBigInt(bigInt: bigint) {
     const res = UInt2048.zero();
-    for (let i = 1; i <= chars.length / wordSize; i++) {
-      const offset = chars.length - (i * wordSize);
-      const word = chars.slice(offset, offset + wordSize).join("");
-      res.words[i - 1] = Field.from(`0x${word}`);
+    for (let i = 0; i < 32; i++) {
+      res.words[i] = Field.from(bigInt & 0xFFFFFFFFFFFFFFFFn);
+      bigInt >>= 64n;
     }
     return res;
   }
@@ -107,8 +98,8 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
 describe("BigInt JS", () => {
 
   it("substracts", () => {
-    let a = UInt2048.fromHexString("0xFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBB");
-    let b = UInt2048.fromHexString("0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAA");
+    let a = UInt2048.fromBigInt(0xFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBn);
+    let b = UInt2048.fromBigInt(0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAn);
 
     let res = a.sub(b);
 
@@ -121,8 +112,8 @@ describe("BigInt JS", () => {
   });
 
   it("substracts with underflow", () => {
-    let a = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBB");
-    let b = UInt2048.fromHexString("0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAA");
+    let a = UInt2048.fromBigInt(0xAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBn);
+    let b = UInt2048.fromBigInt(0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAn);
 
     let res = a.sub(b);
 
@@ -137,7 +128,7 @@ describe("BigInt JS", () => {
 
   it("substracts to 0", () => {
     let a = UInt2048.zero();
-    let b = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAA");
+    let b = UInt2048.fromBigInt(0xAAAAAAAAAAAAAAAAn);
 
     let res = a.sub(b);
 
@@ -149,8 +140,8 @@ describe("BigInt JS", () => {
   });
 
   it("multiplies", () => {
-    let a = UInt2048.fromHexString("0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAA");
-    let b = UInt2048.fromHexString("0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBB");
+    let a = UInt2048.fromBigInt(0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAAn);
+    let b = UInt2048.fromBigInt(0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBBn);
 
     let res = a.mul(b);
 
@@ -194,8 +185,8 @@ describe("BigInt ZK", () => {
   })
 
   it("substracts", async () => {
-    let a = UInt2048.fromHexString("0xFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBB");
-    let b = UInt2048.fromHexString("0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAA");
+    let a = UInt2048.fromBigInt(0xFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBn);
+    let b = UInt2048.fromBigInt(0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAn);
 
     let proof = await TestProgram.subtract(a, b);
     proof.verify();
@@ -210,8 +201,8 @@ describe("BigInt ZK", () => {
   });
 
   it("substracts with underflow", async () => {
-    let a = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBB");
-    let b = UInt2048.fromHexString("0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAA");
+    let a = UInt2048.fromBigInt(0xAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBn);
+    let b = UInt2048.fromBigInt(0xCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAn);
 
     let proof = await TestProgram.subtract(a, b);
     proof.verify();
@@ -228,7 +219,7 @@ describe("BigInt ZK", () => {
 
   it("substracts to 0", async () => {
     let a = UInt2048.zero();
-    let b = UInt2048.fromHexString("0xAAAAAAAAAAAAAAAA");
+    let b = UInt2048.fromBigInt(0xAAAAAAAAAAAAAAAAn);
 
     let proof = await TestProgram.subtract(a, b);
     proof.verify();
@@ -242,8 +233,8 @@ describe("BigInt ZK", () => {
   });
 
   it("multiplies", async () => {
-    let a = UInt2048.fromHexString("0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAA");
-    let b = UInt2048.fromHexString("0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBB");
+    let a = UInt2048.fromBigInt(0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAAn);
+    let b = UInt2048.fromBigInt(0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBBn);
 
     let proof = await TestProgram.multiply(a, b);
     proof.verify();

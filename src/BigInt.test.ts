@@ -40,6 +40,15 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
     return res;
   }
 
+  toBigInt(): bigint {
+    let res = 0n;
+    for (let i = 0; i < 32; i++) {
+      let word = this.words[i].toBigInt();
+      res += word << (64n * BigInt(i));
+    }
+    return res;
+  }
+
   sub(other: UInt2048): UInt2048 {
     let res = UInt2048.zero();
     let borrow = Field.from(0);
@@ -103,12 +112,7 @@ describe("BigInt JS", () => {
 
     let res = a.sub(b);
 
-    expect(res.words[0].toBigInt()).toBe(0x1111111111111111n);
-    expect(res.words[1].toBigInt()).toBe(0x3333333333333333n);
-    for (let i = 2; i < res.words.length; i++) {
-      const word = res.words[i];
-      expect(word.toBigInt()).toBe(0n);
-    }
+    expect(res.toBigInt()).toBe(0x33333333333333331111111111111111n);
   });
 
   it("substracts with underflow", () => {
@@ -119,7 +123,6 @@ describe("BigInt JS", () => {
 
     expect(res.words[0].toBigInt()).toBe(0x1111111111111111n);
     expect(res.words[1].toBigInt()).toBe(0xDDDDDDDDDDDDDDDEn);
-
     for (let i = 2; i < res.words.length; i++) {
       const word = res.words[i];
       expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn);
@@ -135,7 +138,7 @@ describe("BigInt JS", () => {
     expect(res.words[0].toBigInt()).toBe(0x5555555555555556n);
     for (let i = 1; i < res.words.length; i++) {
       const word = res.words[i];
-      expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn)
+      expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn);
     }
   });
 
@@ -145,14 +148,7 @@ describe("BigInt JS", () => {
 
     let res = a.mul(b);
 
-    expect(res.words[0].toBigInt()).toBe(0xD82D82D82D82D82En);
-    expect(res.words[1].toBigInt()).toBe(0x7777777777777777n);
-    expect(res.words[2].toBigInt()).toBe(0x6C16C16C16C16C15n);
-    expect(res.words[3].toBigInt()).toBe(0xEEEEEEEEEEEEEEEEn);
-    for (let i = 4; i < res.words.length; i++) {
-      const word = res.words[i];
-      expect(word.toBigInt()).toBe(0n);
-    }
+    expect(res.toBigInt()).toBe(0xEEEEEEEEEEEEEEEE6C16C16C16C16C157777777777777777D82D82D82D82D82En);
   });
 });
 
@@ -192,12 +188,7 @@ describe("BigInt ZK", () => {
     proof.verify();
     let res = proof.publicOutput;
 
-    expect(res.words[0].toBigInt()).toBe(0x1111111111111111n);
-    expect(res.words[1].toBigInt()).toBe(0x3333333333333333n);
-    for (let i = 2; i < res.words.length; i++) {
-      const word = res.words[i];
-      expect(word.toBigInt()).toBe(0n);
-    }
+    expect(res.toBigInt()).toBe(0x33333333333333331111111111111111n);
   });
 
   it("substracts with underflow", async () => {
@@ -210,7 +201,6 @@ describe("BigInt ZK", () => {
 
     expect(res.words[0].toBigInt()).toBe(0x1111111111111111n);
     expect(res.words[1].toBigInt()).toBe(0xDDDDDDDDDDDDDDDEn);
-
     for (let i = 2; i < res.words.length; i++) {
       const word = res.words[i];
       expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn);
@@ -228,7 +218,7 @@ describe("BigInt ZK", () => {
     expect(res.words[0].toBigInt()).toBe(0x5555555555555556n);
     for (let i = 1; i < res.words.length; i++) {
       const word = res.words[i];
-      expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn)
+      expect(word.toBigInt()).toBe(0xFFFFFFFFFFFFFFFFn);
     }
   });
 
@@ -240,13 +230,6 @@ describe("BigInt ZK", () => {
     proof.verify();
     let res = proof.publicOutput;
 
-    expect(res.words[0].toBigInt()).toBe(0xD82D82D82D82D82En);
-    expect(res.words[1].toBigInt()).toBe(0x7777777777777777n);
-    expect(res.words[2].toBigInt()).toBe(0x6C16C16C16C16C15n);
-    expect(res.words[3].toBigInt()).toBe(0xEEEEEEEEEEEEEEEEn);
-    for (let i = 4; i < res.words.length; i++) {
-      const word = res.words[i];
-      expect(word.toBigInt()).toBe(0n);
-    }
+    expect(res.toBigInt()).toBe(0xEEEEEEEEEEEEEEEE6C16C16C16C16C157777777777777777D82D82D82D82D82En);
   });
 })

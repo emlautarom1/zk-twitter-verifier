@@ -184,7 +184,7 @@ describe("BigInt JS", () => {
     let res = a.mulMod(b, m);
 
     expect(res.toBigInt()).toBe(0x67FE2DF75A56ED1C86F0C0F7949801D2n);
-  })
+  });
 });
 
 // ZK-Program tests
@@ -205,13 +205,23 @@ let TestProgram = ZkProgram({
         return a.mul(b);
       }
     },
+    multiplyMod: {
+      privateInputs: [UInt2048, UInt2048, UInt2048],
+      method(a: UInt2048, b: UInt2048, m: UInt2048): UInt2048 {
+        return a.mulMod(b, m);
+      }
+    },
   }
 })
 
 describe("BigInt ZK", () => {
   beforeAll(async () => {
     let analysis = TestProgram.analyzeMethods();
-    console.log({"subtract": analysis.subtract.rows, "multiply": analysis.multiply.rows });
+    console.log({
+      "subtract": analysis.subtract.rows,
+      "multiply": analysis.multiply.rows,
+      "multiplyMod": analysis.multiplyMod.rows,
+    });
     await TestProgram.compile();
   })
 
@@ -266,5 +276,17 @@ describe("BigInt ZK", () => {
     let res = proof.publicOutput;
 
     expect(res.toBigInt()).toBe(0xEEEEEEEEEEEEEEEE6C16C16C16C16C157777777777777777D82D82D82D82D82En);
+  });
+
+  it.only("multiplies in modulo", async () => {
+    let a = UInt2048.fromBigInt(0xFFFFFFFFFFFFFFFFAAAAAAAAAAAAAAAAn);
+    let b = UInt2048.fromBigInt(0xEEEEEEEEEEEEEEEEBBBBBBBBBBBBBBBBn);
+    let m = UInt2048.fromBigInt(0xAAAAAAAAAAAAAAAACCCCCCCCCCCCCCCCn);
+
+    let proof = await TestProgram.multiplyMod(a, b, m);
+    proof.verify();
+    let res = proof.publicOutput;
+
+    expect(res.toBigInt()).toBe(0x67FE2DF75A56ED1C86F0C0F7949801D2n);
   });
 })

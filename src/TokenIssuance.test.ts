@@ -25,13 +25,12 @@ class TokenIssuance extends SmartContract {
   }
 
   @method submitSecret(secret: Field) {
-    secret.assertEquals(MY_SECRET);
+    secret.assertEquals(MY_SECRET, "Incorrect secret");
 
     this.token.mint({
       address: this.sender,
       amount: 1,
     });
-
   }
 }
 
@@ -84,5 +83,20 @@ describe('TokenIssuance', () => {
 
     let tokenBalance: bigint = Mina.getBalance(userAccount, zkApp.token.id).value.toBigInt();
     expect(tokenBalance).toEqual(1n);
+  });
+
+  it('fails to mint a token when the secret is incorrect', async () => {
+    await localDeploy();
+
+    expect(async () => {
+      const txn = await Mina.transaction(userAccount, () => {
+        AccountUpdate.fundNewAccount(userAccount);
+        zkApp.submitSecret(Field.from(0));
+      });
+      await txn.prove();
+      await txn.sign([userKey]).send();
+    }).rejects.toThrow("Incorrect secret");
+
+    expect(() => Mina.getBalance(userAccount, zkApp.token.id)).toThrow();
   });
 });

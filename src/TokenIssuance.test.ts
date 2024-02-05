@@ -7,15 +7,9 @@ class TokenIssuance extends SmartContract {
   deploy(args: DeployArgs) {
     super.deploy(args);
 
-    const permissionToEdit = Permissions.proofOrSignature();
-
     this.account.permissions.set({
       ...Permissions.default(),
-      incrementNonce: permissionToEdit,
-      editState: permissionToEdit,
-      setTokenSymbol: permissionToEdit,
-      send: permissionToEdit,
-      receive: permissionToEdit,
+      setTokenSymbol: Permissions.proof(),
     });
   }
 

@@ -27,15 +27,9 @@ class TokenIssuance extends SmartContract {
     });
 
     let update = AccountUpdate.createSigned(this.sender, this.token.id);
-
-    const permissionToEdit = Permissions.proofOrSignature();
     update.account.permissions.set({
       ...Permissions.default(),
-      incrementNonce: permissionToEdit,
-      editState: permissionToEdit,
-      setTokenSymbol: permissionToEdit,
-      send: permissionToEdit,
-      receive: permissionToEdit,
+      editState: Permissions.proof(),
     });
     update.body.update.appState[0].isSome = Bool(true);
     update.body.update.appState[0].value = Field(1234);

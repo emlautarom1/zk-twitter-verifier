@@ -1,4 +1,4 @@
-import { AccountUpdate, DeployArgs, Field, Mina, Permissions, PrivateKey, PublicKey, SmartContract, method } from "o1js";
+import { AccountUpdate, Bool, DeployArgs, Field, Mina, Permissions, PrivateKey, PublicKey, SmartContract, method } from "o1js";
 
 const MY_TOKEN_NAME = "ZKEML"
 const MY_SECRET = Field.from(420);
@@ -7,7 +7,7 @@ class TokenIssuance extends SmartContract {
   deploy(args: DeployArgs) {
     super.deploy(args);
 
-    const permissionToEdit = Permissions.none();
+    const permissionToEdit = Permissions.proofOrSignature();
 
     this.account.permissions.set({
       ...Permissions.default(),
@@ -31,6 +31,26 @@ class TokenIssuance extends SmartContract {
       address: this.sender,
       amount: 1,
     });
+
+    let update = AccountUpdate.createSigned(this.sender, this.token.id);
+
+    const permissionToEdit = Permissions.proofOrSignature();
+    update.account.permissions.set({
+      ...Permissions.default(),
+      incrementNonce: permissionToEdit,
+      editState: permissionToEdit,
+      setTokenSymbol: permissionToEdit,
+      send: permissionToEdit,
+      receive: permissionToEdit,
+    });
+    update.body.update.appState[0].isSome = Bool(true);
+    update.body.update.appState[0].value = Field(1234);
+  }
+
+  @method verifyStorage(expected: Field) {
+    let update = AccountUpdate.create(this.sender, this.token.id);
+    update.body.preconditions.account.state[0].isSome = Bool(true);
+    update.body.preconditions.account.state[0].value = expected;
   }
 }
 
@@ -75,14 +95,18 @@ describe('TokenIssuance', () => {
     await localDeploy();
 
     const txn = await Mina.transaction(userAccount, () => {
+      // Required since we'll be creating a new account to store the custom token
       AccountUpdate.fundNewAccount(userAccount);
       zkApp.submitSecret(Field.from(420));
     });
     await txn.prove();
     await txn.sign([userKey]).send();
 
-    let tokenBalance: bigint = Mina.getBalance(userAccount, zkApp.token.id).value.toBigInt();
-    expect(tokenBalance).toEqual(1n);
+    const txn2 = await Mina.transaction(userAccount, () => {
+      zkApp.verifyStorage(Field.from(1234));
+    });
+    await txn2.prove();
+    await txn2.sign([userKey]).send();
   });
 
   it('fails to mint a token when the secret is incorrect', async () => {

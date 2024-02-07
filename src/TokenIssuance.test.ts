@@ -24,7 +24,7 @@ class TokenIssuance extends SmartContract {
     let update = AccountUpdate.createSigned(this.sender, this.token.id);
     update.account.permissions.set({
       ...Permissions.default(),
-      editState: Permissions.proof(),
+      editState: Permissions.proofOrSignature(),
     });
     update.body.update.appState[0].isSome = Bool(true);
     update.body.update.appState[0].value = Field(1234);
@@ -37,7 +37,7 @@ class TokenIssuance extends SmartContract {
   }
 }
 
-let proofsEnabled = true;
+let proofsEnabled = false;
 
 describe('TokenIssuance', () => {
   let deployerAccount: PublicKey;
@@ -87,6 +87,24 @@ describe('TokenIssuance', () => {
 
     const txn2 = await Mina.transaction(userAccount, () => {
       zkApp.verifyStorage(Field.from(1234));
+    });
+    await txn2.prove();
+    await txn2.sign([userKey]).send();
+  });
+
+  it('minting a new token is idempotent', async () => {
+    await localDeploy();
+
+    const txn = await Mina.transaction(userAccount, () => {
+      // Required since we'll be creating a new account to store the custom token
+      AccountUpdate.fundNewAccount(userAccount);
+      zkApp.submitSecret(Field.from(420));
+    });
+    await txn.prove();
+    await txn.sign([userKey]).send();
+
+    const txn2 = await Mina.transaction(userAccount, () => {
+      zkApp.submitSecret(Field.from(420));
     });
     await txn2.prove();
     await txn2.sign([userKey]).send();

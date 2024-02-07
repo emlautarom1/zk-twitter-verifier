@@ -21,11 +21,6 @@ class TokenIssuance extends SmartContract {
   @method submitSecret(secret: Field) {
     secret.assertEquals(MY_SECRET, "Incorrect secret");
 
-    this.token.mint({
-      address: this.sender,
-      amount: 1,
-    });
-
     let update = AccountUpdate.createSigned(this.sender, this.token.id);
     update.account.permissions.set({
       ...Permissions.default(),

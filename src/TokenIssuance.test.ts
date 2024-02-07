@@ -137,6 +137,12 @@ describe('TokenIssuance', () => {
     });
     await txn2.prove();
     await txn2.sign([userKey]).send();
+
+    const txn3 = await Mina.transaction(userAccount, () => {
+      zkApp.verifyStorage(Field.from(1234));
+    });
+    await txn3.prove();
+    await txn3.sign([userKey]).send();
   });
 
   it('prevents external contracts from highjacking the storage', async () => {

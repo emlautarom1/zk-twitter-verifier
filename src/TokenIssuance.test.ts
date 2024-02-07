@@ -37,6 +37,20 @@ class TokenIssuance extends SmartContract {
   }
 }
 
+class HighjackStorage extends SmartContract {
+  @method modifyStorage(value: Field, signer: PublicKey, tokenId: Field) {
+    let update = AccountUpdate.createSigned(signer, tokenId);
+    update.body.update.appState[0].isSome = Bool(true);
+    update.body.update.appState[0].value = value;
+  }
+
+  @method verifyStorage(value: Field, signer: PublicKey, tokenId: Field) {
+    let update = AccountUpdate.create(signer, tokenId);
+    update.body.preconditions.account.state[0].isSome = Bool(true);
+    update.body.preconditions.account.state[0].value = value;
+  }
+}
+
 let proofsEnabled = false;
 
 describe('TokenIssuance', () => {
@@ -64,6 +78,21 @@ describe('TokenIssuance', () => {
     zkAppAddress = zkAppPrivateKey.toPublicKey();
     zkApp = new TokenIssuance(zkAppAddress);
   });
+
+  async function highjackDeploy() {
+    let highjackPrivateKey = PrivateKey.random();
+    let highjackAddress = highjackPrivateKey.toPublicKey();
+    let highjackApp = new HighjackStorage(highjackAddress);
+
+    const deployTx = await Mina.transaction(deployerAccount, () => {
+      AccountUpdate.fundNewAccount(deployerAccount);
+      highjackApp.deploy();
+    });
+    await deployTx.prove();
+    await deployTx.sign([deployerKey, highjackPrivateKey]).send();
+
+    return highjackApp;
+  }
 
   async function localDeploy() {
     const txn = await Mina.transaction(deployerAccount, () => {
@@ -108,6 +137,32 @@ describe('TokenIssuance', () => {
     });
     await txn2.prove();
     await txn2.sign([userKey]).send();
+  });
+
+  it('prevents external contracts from highjacking the storage', async () => {
+    await localDeploy();
+
+    // Get the storage in an initial state
+    const txn = await Mina.transaction(userAccount, () => {
+      AccountUpdate.fundNewAccount(userAccount);
+      zkApp.submitSecret(Field.from(420));
+    });
+    await txn.prove();
+    await txn.sign([userKey]).send();
+
+    // Deploy the highjack contract
+    if (proofsEnabled) await HighjackStorage.compile();
+    let highjackApp = await highjackDeploy();
+
+    expect(async () => {
+      // Highjack the storage
+      const txn3 = await Mina.transaction(userAccount, () => {
+        highjackApp.modifyStorage(Field.from(7890), userAccount, zkApp.token.id);
+        highjackApp.verifyStorage(Field.from(7890), userAccount, zkApp.token.id);
+      });
+      await txn3.prove();
+      await txn3.sign([userKey]).send();
+    }).rejects.toThrow();
   });
 
   it('fails to mint a token when the secret is incorrect', async () => {

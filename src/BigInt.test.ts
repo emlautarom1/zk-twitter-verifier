@@ -1,4 +1,4 @@
-import { Field, Provable, Struct, ZkProgram } from "o1js";
+import { Bool, Field, Provable, Struct, UInt64, ZkProgram } from "o1js";
 import { provableTuple } from "o1js/dist/node/lib/circuit_value";
 
 const Gadgets = {
@@ -16,6 +16,38 @@ const Gadgets = {
     n.assertEquals(quotient.mul(1n << 64n).add(remainder));
 
     return { quotient, remainder };
+  },
+
+  /**
+   * Specialized method for `UInt2048.sub`.
+   * Assumes that:
+   * - x could be at most {@link UInt64.MAXINT}
+   * - y could be at most {@link UInt64.MAXINT} `+ 1`
+   */
+  lessThanOrEqual64: (x: Field, y: Field): Bool => {
+    let xMinusY = x.sub(y);
+    let yMinusX = xMinusY.neg();
+    let xMinusYFits = xMinusY
+      .rangeCheckHelper(UInt64.NUM_BITS)
+      .equals(xMinusY);
+    let yMinusXFits = yMinusX
+      // 64 bits + 1 additional bit in case of borrow
+      // We need to use 16 bits instead of 1 due to an requirement of `rangeCheckHelper`
+      .rangeCheckHelper(UInt64.NUM_BITS + (1 * 16))
+      .equals(yMinusX);
+    xMinusYFits.or(yMinusXFits).assertEquals(true);
+    // x <= y if y - x fits in 64 bits
+    return yMinusXFits;
+  },
+
+  /**
+   * Specialized method for `UInt2048.sub`.
+   * Assumes that:
+   * - x could be at most {@link UInt64.MAXINT}
+   * - y could be at most {@link UInt64.MAXINT} `+ 1`
+   */
+  lessThan64: (x: Field, y: Field): Bool => {
+    return Gadgets.lessThanOrEqual64(x, y).and(x.equals(y).not());
   }
 }
 
@@ -60,7 +92,7 @@ export class UInt2048 extends Struct({ words: DoubleWord32 }) {
 
       // In case the minuend is less than the substrahend, we have to borrow from the next word
       // If we borrow, we add 2^64 to the minuend
-      let requiresBorrow = minuend.lessThan(substrahend);
+      let requiresBorrow = Gadgets.lessThan64(minuend, substrahend);
       borrow = Provable.if(
         requiresBorrow,
         Field.from(1),
